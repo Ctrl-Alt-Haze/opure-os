@@ -1,0 +1,11 @@
+[package]
+name = "opure-cuda"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+opure-hal = { path = "../opure-hal" }
+opure-geometric = { path = "../opure-geometric" }
+opure-shell = { path = "../opure-shell" }

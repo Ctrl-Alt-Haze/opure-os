@@ -16,3 +16,6 @@ opure-oztae = { path = "../../crates/opure-oztae" }
 opure-rsi = { path = "../../crates/opure-rsi" }
 opure-boot = { path = "../../crates/opure-boot" }
 opure-endpoint = { path = "../../crates/opure-endpoint" }
+opure-swarm = { path = "../../crates/opure-swarm" }
+opure-cuda = { path = "../../crates/opure-cuda" }
+opure-cluster = { path = "../../crates/opure-cluster" }

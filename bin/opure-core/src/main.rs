@@ -40,6 +40,9 @@ use opure_oztae::{
 use opure_rsi::{PlasticityMutator, TernaryPlasticityEngine};
 use opure_boot::{BareMetalBoot, LongModePaging, Multiboot2Parser, PageTable};
 use opure_endpoint::OpureEndpointServer;
+use opure_swarm::{SwarmRole, SwarmSupervisor};
+use opure_cuda::{TernarySiliconCoprocessor, OPURE_TERNARY_TENSOR_PTX};
+use opure_cluster::{ClusterMeshNode, GeometricConsensus, RoCeProtocol};
 
 const NUM_CLASSES: usize = 8;
 const RING_BUFFER_CAPACITY: usize = 1024;
@@ -532,7 +535,54 @@ fn main() {
     println!("[ENDPOINT] Merkle Audit Ledger Count: {} | Integrity Verified: {}",
         endpoint_server.audit_ledger.len(), endpoint_server.audit_ledger.verify_integrity());
 
-    // 12. Comprehensive Performance Benchmarks
+    // 12. Wave 3: OPURE Native Agent Swarm SDK (opure-swarm)
+    println!("\n------------------------------------------------------------");
+    println!("  WAVE 3: OPURE NATIVE AGENT SWARM SDK (OPURE-SWARM)        ");
+    println!("------------------------------------------------------------");
+    let mut supervisor = SwarmSupervisor::<128>::new();
+    let swarm_proto = TernaryCentroid64::new(0xFFFF_0000_FFFF_0000, 0x0000_FFFF_0000_FFFF);
+    let a1 = supervisor.spawn_agent(SwarmRole::TelemetryMonitor, CAP_READ, swarm_proto, swarm_proto, 0, 1000).unwrap();
+    let a2 = supervisor.spawn_agent(SwarmRole::KineticCompositor, CAP_ALL, swarm_proto, swarm_proto, 1000, 2000).unwrap();
+    let a3 = supervisor.spawn_agent(SwarmRole::LifterSplicer, CAP_TRAMPOLINE_SPLICE | CAP_READ, swarm_proto, swarm_proto, 2000, 3000).unwrap();
+    let a4 = supervisor.spawn_agent(SwarmRole::SecuritySentinel, CAP_ALL, swarm_proto, swarm_proto, 3000, 4000).unwrap();
+    println!("[SWARM] Spawned native micro-agents: [{}, {}, {}, {}] in unmanaged StaticSlab", a1, a2, a3, a4);
+
+    let mut swarm_bus = EventRingBuffer::<16>::new();
+    let mut swarm_evt = OpureEvent::empty();
+    swarm_evt.kind = EventKind::AgentHeartbeat;
+    swarm_bus.push(swarm_evt).unwrap();
+    let summary = supervisor.tick_swarm(&mut swarm_bus);
+    println!("[SWARM] Swarm Tick Completed: Active Agents: {} | Dispatched Events: {} | Adaptations: {}",
+        summary.active_agents, summary.events_dispatched, summary.adaptations_occurred);
+
+    // 13. Wave 2: Native Silicon Coprocessor Integration (opure-cuda)
+    println!("\n------------------------------------------------------------");
+    println!("  WAVE 2: NATIVE SILICON COPROCESSOR INTEGRATION (OPURE-CUDA)");
+    println!("------------------------------------------------------------");
+    println!("[CUDA] Raw PTX Kernel Assembly Loaded ({} bytes, target sm_80 / sm_90)", OPURE_TERNARY_TENSOR_PTX.len());
+    let cuda_coprocessor = TernarySiliconCoprocessor::new(&ternary_centroids, intents);
+    let mut cuda_scores = [0i32; NUM_CLASSES];
+    let (cuda_intent, cuda_score) = cuda_coprocessor.execute_warp_gemv(&ternary_centroids[0], &mut cuda_scores);
+    println!("[CUDA] Warp-Parallel PTX/GEMV Execution: Best Intent = {:?} | Score = {}", cuda_intent, cuda_score);
+
+    // 14. Wave 1: Distributed P2P Mesh & RDMA Cluster Engine (opure-cluster)
+    println!("\n------------------------------------------------------------");
+    println!("  WAVE 1: DISTRIBUTED P2P MESH & RDMA CLUSTER ENGINE        ");
+    println!("------------------------------------------------------------");
+    let mut cluster_node = ClusterMeshNode::<16>::new(101, 0x1000);
+    cluster_node.register_peer(202, 0x2000, 0x00007FFA_A000_0000, 0x1234_5678).unwrap();
+    let mut roce_frame = [0u8; 256];
+    let roce_bytes = cluster_node.format_centroid_sync_frame(0, &ternary_centroids[0], &mut roce_frame).unwrap();
+    let (bth, reth, _) = RoCeProtocol::parse_rdma_write_frame(&roce_frame[..roce_bytes]).unwrap();
+    println!("[CLUSTER] Formatted RoCEv2 RDMA WRITE Packet: Opcode = 0x{:02X} | Remote VAddr = 0x{:016X} | Size = {} bytes",
+        bth.opcode, reth.remote_vaddr, roce_bytes);
+
+    let cluster_candidates = [ternary_centroids[0], ternary_centroids[0], ternary_centroids[1]];
+    let consensus_centroid = GeometricConsensus::compute_consensus(&cluster_candidates);
+    println!("[CLUSTER] Multi-Node Geometric Consensus Resolved (Consensus L0 Norm: {} bits)",
+        consensus_centroid.l0_norm());
+
+    // 15. Comprehensive Performance Benchmarks
     println!("\n============================================================");
     println!("  OPURE OS COMPREHENSIVE BENCHMARKS (1,000,000 PASSES)      ");
     println!("============================================================");
@@ -731,6 +781,38 @@ fn main() {
     let ns_endpoint = t_endpoint_elapsed.as_nanos() as f64 / endpoint_iters as f64;
     let mops_endpoint = (endpoint_iters as f64 / t_endpoint_elapsed.as_secs_f64()) / 1_000_000.0;
 
+    // Benchmark 15: Autonomous Agent Swarm Tick & Mailbox Dispatch (Wave 3)
+    let t_swarm_start = Instant::now();
+    let swarm_iters = 100_000;
+    for _ in 0..swarm_iters {
+        let tick_res = supervisor.tick_swarm(black_box(&mut swarm_bus));
+        black_box(tick_res);
+    }
+    let t_swarm_elapsed = t_swarm_start.elapsed();
+    let ns_swarm = t_swarm_elapsed.as_nanos() as f64 / swarm_iters as f64;
+    let mops_swarm = (swarm_iters as f64 / t_swarm_elapsed.as_secs_f64()) / 1_000_000.0;
+
+    // Benchmark 16: Native Silicon Tensor Core Warp GEMV (Wave 2, >100M passes/sec target)
+    let t_cuda_start = Instant::now();
+    for _ in 0..bench_iters {
+        let (intent, score) = cuda_coprocessor.execute_warp_gemv(black_box(&ternary_centroids[0]), black_box(&mut cuda_scores));
+        black_box((intent, score));
+    }
+    let t_cuda_elapsed = t_cuda_start.elapsed();
+    let ns_cuda = t_cuda_elapsed.as_nanos() as f64 / bench_iters as f64;
+    let mops_cuda = (bench_iters as f64 / t_cuda_elapsed.as_secs_f64()) / 1_000_000.0;
+
+    // Benchmark 17: Distributed P2P Mesh RoCEv2 RDMA Sync & Consensus (Wave 1)
+    let t_cluster_start = Instant::now();
+    for _ in 0..bench_iters {
+        let frame_len = cluster_node.format_centroid_sync_frame(black_box(0), black_box(&ternary_centroids[0]), black_box(&mut roce_frame)).unwrap();
+        let consensus = GeometricConsensus::compute_consensus(black_box(&cluster_candidates));
+        black_box((frame_len, consensus));
+    }
+    let t_cluster_elapsed = t_cluster_start.elapsed();
+    let ns_cluster = t_cluster_elapsed.as_nanos() as f64 / bench_iters as f64;
+    let mops_cluster = (bench_iters as f64 / t_cluster_elapsed.as_secs_f64()) / 1_000_000.0;
+
     println!("1. Multiplier-Less Ternary NCM Latency:   {:.2} ns / pass ({:.2}x over i8)", ns_ternary, ns_i8 / ns_ternary);
     println!("2. Mandelbrot Stability Gate Latency:     {:.2} ns / check", ns_mandel);
     println!("3. Zero-Copy PE32+ Header + IAT Parse:    {:.2} ns / binary ({:.2}M parses/sec)", ns_pe, mops_pe);
@@ -744,7 +826,10 @@ fn main() {
     println!("11. Cyber-Brutalist SDF Raster Math:      {:.2} ns / pixel ({:.2}M pixels/sec)", ns_sdf, mops_sdf);
     println!("12. Bare-Metal Boot & 4-Level Paging:     {:.2} ns / setup ({:.2}M boots/sec)", ns_boot, mops_boot);
     println!("13. OpenAI HTTP + NCM Routing + JSON:     {:.2} ns / request ({:.2}M reqs/sec)", ns_endpoint, mops_endpoint);
-    println!("14. Total Memory Allocation:              0 bytes (Pure unmanaged stack/slab)");
+    println!("14. Swarm Tick & Mailbox Dispatch:        {:.2} ns / sweep ({:.2}M sweeps/sec)", ns_swarm, mops_swarm);
+    println!("15. Silicon Tensor Core Warp GEMV:        {:.2} ns / pass ({:.2}M passes/sec)", ns_cuda, mops_cuda);
+    println!("16. RoCEv2 RDMA Sync + Consensus:         {:.2} ns / cycle ({:.2}M cycles/sec)", ns_cluster, mops_cluster);
+    println!("17. Total Memory Allocation:              0 bytes (Pure unmanaged stack/slab)");
     println!("============================================================");
 
     // Suppress unused warning on cacheline variables

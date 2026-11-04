@@ -21,12 +21,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "opure-cluster"
+version = "0.1.0"
+dependencies = [
+ "opure-bus",
+ "opure-geometric",
+ "opure-hal",
+]
+
+[[package]]
 name = "opure-core"
 version = "0.1.0"
 dependencies = [
  "opure-boot",
  "opure-bus",
+ "opure-cluster",
  "opure-crystallizer",
+ "opure-cuda",
  "opure-endpoint",
  "opure-geometric",
  "opure-hal",
@@ -34,6 +45,7 @@ dependencies = [
  "opure-oztae",
  "opure-rsi",
  "opure-shell",
+ "opure-swarm",
 ]
 
 [[package]]
@@ -41,6 +53,15 @@ name = "opure-crystallizer"
 version = "0.1.0"
 dependencies = [
  "opure-hal",
+]
+
+[[package]]
+name = "opure-cuda"
+version = "0.1.0"
+dependencies = [
+ "opure-geometric",
+ "opure-hal",
+ "opure-shell",
 ]
 
 [[package]]
@@ -105,4 +126,17 @@ dependencies = [
  "opure-geometric",
  "opure-hal",
  "opure-lifter",
+]
+
+[[package]]
+name = "opure-swarm"
+version = "0.1.0"
+dependencies = [
+ "opure-bus",
+ "opure-geometric",
+ "opure-hal",
+ "opure-lifter",
+ "opure-oztae",
+ "opure-rsi",
+ "opure-shell",
 ]

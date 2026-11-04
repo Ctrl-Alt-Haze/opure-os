@@ -61,6 +61,12 @@ impl TernaryCentroid64 {
     pub fn non_zero_count(&self) -> u32 {
         self.pos_mask.count_ones() + self.neg_mask.count_ones()
     }
+
+    /// L0 norm alias for non_zero_count
+    #[inline(always)]
+    pub fn l0_norm(&self) -> u32 {
+        self.non_zero_count()
+    }
 }
 
 /// Cacheline-packed 4x Ternary Centroids.
@@ -123,6 +129,16 @@ impl<T, const CAPACITY: usize> StaticSlab<T, CAPACITY> {
         self.storage[idx].write(item);
         self.len += 1;
         Ok(idx)
+    }
+
+    #[inline(always)]
+    pub fn pop(&mut self) -> Option<T> {
+        if self.len == 0 {
+            None
+        } else {
+            self.len -= 1;
+            unsafe { Some(self.storage[self.len].assume_init_read()) }
+        }
     }
 
     #[inline(always)]

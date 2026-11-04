@@ -11,6 +11,9 @@ members = [
     "crates/opure-rsi",
     "crates/opure-boot",
     "crates/opure-endpoint",
+    "crates/opure-swarm",
+    "crates/opure-cuda",
+    "crates/opure-cluster",
     "bin/opure-core",
 ]
 
