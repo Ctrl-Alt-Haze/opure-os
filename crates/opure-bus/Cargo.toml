@@ -1,0 +1,10 @@
+[package]
+name = "opure-bus"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+opure-hal = { path = "../opure-hal" }
+opure-geometric = { path = "../opure-geometric" }

@@ -1,0 +1,13 @@
+[package]
+name = "opure-endpoint"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+opure-hal = { path = "../opure-hal" }
+opure-geometric = { path = "../opure-geometric" }
+opure-oztae = { path = "../opure-oztae" }
+opure-bus = { path = "../opure-bus" }
+opure-shell = { path = "../opure-shell" }

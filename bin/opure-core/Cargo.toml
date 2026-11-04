@@ -1,0 +1,18 @@
+[package]
+name = "opure-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+opure-hal = { path = "../../crates/opure-hal" }
+opure-geometric = { path = "../../crates/opure-geometric" }
+opure-bus = { path = "../../crates/opure-bus" }
+opure-crystallizer = { path = "../../crates/opure-crystallizer" }
+opure-shell = { path = "../../crates/opure-shell" }
+opure-lifter = { path = "../../crates/opure-lifter" }
+opure-oztae = { path = "../../crates/opure-oztae" }
+opure-rsi = { path = "../../crates/opure-rsi" }
+opure-boot = { path = "../../crates/opure-boot" }
+opure-endpoint = { path = "../../crates/opure-endpoint" }

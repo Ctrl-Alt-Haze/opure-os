@@ -1,0 +1,28 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/opure-hal",
+    "crates/opure-crystallizer",
+    "crates/opure-geometric",
+    "crates/opure-bus",
+    "crates/opure-shell",
+    "crates/opure-lifter",
+    "crates/opure-oztae",
+    "crates/opure-rsi",
+    "crates/opure-boot",
+    "crates/opure-endpoint",
+    "bin/opure-core",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["OPURE Core Architecture Team"]
+license = "Apache-2.0 OR MIT"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+overflow-checks = false

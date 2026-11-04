@@ -1,0 +1,13 @@
+[package]
+name = "opure-rsi"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+opure-hal = { path = "../opure-hal" }
+opure-crystallizer = { path = "../opure-crystallizer" }
+opure-geometric = { path = "../opure-geometric" }
+opure-bus = { path = "../opure-bus" }
+opure-oztae = { path = "../opure-oztae" }
