@@ -1,10 +1,14 @@
 //! OPURE Ternary Weight Crystallizer
 //! 
-//! Zero-copy weight ingestion and Absmean ternary quantization ({-1, 0, +1})
+//! Zero-copy weight ingestion, SafeTensors model squashing, and Absmean ternary quantization ({-1, 0, +1})
 //! Packing 64-dimensional centroids into 16-byte dual bitmasks (4 per 64B cacheline).
 
 #![no_std]
 #![deny(warnings)]
+
+pub mod squasher;
+
+pub use squasher::*;
 
 use opure_hal::{PackedTernaryCacheline, TernaryCentroid64};
 
@@ -48,22 +52,16 @@ pub struct AbsmeanTernaryQuantizer;
 
 impl AbsmeanTernaryQuantizer {
     /// Quantize a 64-dimensional continuous float vector into a 16-byte `TernaryCentroid64`.
-    /// 
-    /// Formula:
-    ///   gamma = (1 / 64) * sum(|W_i|)
-    ///   threshold = 0.5 * gamma
-    ///   W_ternary = +1 if W_i > threshold, -1 if W_i < -threshold, else 0
     pub fn quantize_f32_slice(weights: &[f32; 64]) -> TernaryCentroid64 {
         let mut abs_sum = 0.0f32;
         for &w in weights.iter() {
             abs_sum += if w < 0.0 { -w } else { w };
         }
-
         let gamma = abs_sum / 64.0;
         let threshold = 0.5 * gamma;
 
-        let mut pos_mask: u64 = 0;
-        let mut neg_mask: u64 = 0;
+        let mut pos_mask = 0u64;
+        let mut neg_mask = 0u64;
 
         for (i, &w) in weights.iter().enumerate() {
             if w > threshold {
@@ -76,23 +74,23 @@ impl AbsmeanTernaryQuantizer {
         TernaryCentroid64::new(pos_mask, neg_mask)
     }
 
-    /// Quantize a 64-dimensional i8 vector (e.g. integer telemetry) into a 16-byte `TernaryCentroid64`.
+    /// Quantize a 64-dimensional normalized i8 vector into a 16-byte `TernaryCentroid64`.
     pub fn quantize_i8_slice(weights: &[i8; 64]) -> TernaryCentroid64 {
-        let mut abs_sum: u32 = 0;
+        let mut abs_sum: i32 = 0;
         for &w in weights.iter() {
-            abs_sum += (w as i16).unsigned_abs() as u32;
+            abs_sum += (w as i32).abs();
         }
+        let gamma = abs_sum / 64;
+        let threshold = gamma / 2;
 
-        // gamma = abs_sum / 64; threshold = gamma / 2 = abs_sum / 128
-        let threshold = (abs_sum / 128) as i8;
-
-        let mut pos_mask: u64 = 0;
-        let mut neg_mask: u64 = 0;
+        let mut pos_mask = 0u64;
+        let mut neg_mask = 0u64;
 
         for (i, &w) in weights.iter().enumerate() {
-            if w > threshold {
+            let val = w as i32;
+            if val > threshold {
                 pos_mask |= 1u64 << i;
-            } else if w < -threshold {
+            } else if val < -threshold {
                 neg_mask |= 1u64 << i;
             }
         }
@@ -100,24 +98,15 @@ impl AbsmeanTernaryQuantizer {
         TernaryCentroid64::new(pos_mask, neg_mask)
     }
 
-    /// Batch crystallize 4 external weight slices into a single 64-byte `PackedTernaryCacheline`.
-    pub fn crystallize_cacheline_f32(batch: [&[f32; 64]; 4]) -> PackedTernaryCacheline {
-        PackedTernaryCacheline::new([
-            Self::quantize_f32_slice(batch[0]),
-            Self::quantize_f32_slice(batch[1]),
-            Self::quantize_f32_slice(batch[2]),
-            Self::quantize_f32_slice(batch[3]),
-        ])
-    }
-
-    /// Batch crystallize 4 i8 weight slices into a single 64-byte `PackedTernaryCacheline`.
-    pub fn crystallize_cacheline_i8(batch: [&[i8; 64]; 4]) -> PackedTernaryCacheline {
-        PackedTernaryCacheline::new([
-            Self::quantize_i8_slice(batch[0]),
-            Self::quantize_i8_slice(batch[1]),
-            Self::quantize_i8_slice(batch[2]),
-            Self::quantize_i8_slice(batch[3]),
-        ])
+    /// Packs 4 x 16-byte `TernaryCentroid64` structs into a single 64-byte `PackedTernaryCacheline`.
+    #[inline(always)]
+    pub fn crystallize_cacheline(
+        c0: TernaryCentroid64,
+        c1: TernaryCentroid64,
+        c2: TernaryCentroid64,
+        c3: TernaryCentroid64,
+    ) -> PackedTernaryCacheline {
+        PackedTernaryCacheline::new([c0, c1, c2, c3])
     }
 }
 
@@ -129,39 +118,57 @@ mod tests {
     fn test_absmean_quantize_f32() {
         let mut weights = [0.0f32; 64];
         weights[0] = 1.0;
-        weights[1] = 0.8;
-        weights[2] = -0.9;
-        weights[3] = 0.01; // Below threshold (0.01 < gamma/2) -> 0
+        weights[1] = -1.0;
+        weights[2] = 0.001;
 
         let centroid = AbsmeanTernaryQuantizer::quantize_f32_slice(&weights);
-        // Bit 0 and 1 must be set in pos_mask
-        assert_eq!(centroid.pos_mask & 0b0011, 0b0011);
-        // Bit 2 must be set in neg_mask
-        assert_eq!(centroid.neg_mask & 0b0100, 0b0100);
-        // Bit 3 must be 0 in both
-        assert_eq!(centroid.pos_mask & 0b1000, 0);
-        assert_eq!(centroid.neg_mask & 0b1000, 0);
+        assert_eq!(centroid.pos_mask & 1, 1);
+        assert_eq!(centroid.neg_mask & 2, 2);
+        assert_eq!(centroid.pos_mask & 4, 0);
+        assert_eq!(centroid.neg_mask & 4, 0);
     }
 
     #[test]
     fn test_absmean_quantize_i8() {
         let mut weights = [0i8; 64];
-        weights[10] = 80;
-        weights[20] = -75;
+        weights[0] = 50;
+        weights[1] = -50;
+        weights[2] = 0;
 
         let centroid = AbsmeanTernaryQuantizer::quantize_i8_slice(&weights);
-        assert_ne!(centroid.pos_mask & (1u64 << 10), 0);
-        assert_ne!(centroid.neg_mask & (1u64 << 20), 0);
+        assert_eq!(centroid.pos_mask & 1, 1);
+        assert_eq!(centroid.neg_mask & 2, 2);
+        assert_eq!(centroid.pos_mask & 4, 0);
+        assert_eq!(centroid.neg_mask & 4, 0);
     }
 
     #[test]
     fn test_cacheline_crystallization() {
-        let w0 = [10i8; 64];
-        let w1 = [-10i8; 64];
-        let w2 = [20i8; 64];
-        let w3 = [-20i8; 64];
+        let c0 = TernaryCentroid64::new(1, 0);
+        let c1 = TernaryCentroid64::new(2, 0);
+        let c2 = TernaryCentroid64::new(4, 0);
+        let c3 = TernaryCentroid64::new(8, 0);
 
-        let line = AbsmeanTernaryQuantizer::crystallize_cacheline_i8([&w0, &w1, &w2, &w3]);
-        assert_eq!(line.centroids.len(), 4);
+        let cacheline = AbsmeanTernaryQuantizer::crystallize_cacheline(c0, c1, c2, c3);
+        assert_eq!(cacheline.centroids[0], c0);
+        assert_eq!(cacheline.centroids[1], c1);
+        assert_eq!(cacheline.centroids[2], c2);
+        assert_eq!(cacheline.centroids[3], c3);
+    }
+
+    #[test]
+    fn test_safetensors_tensor_squashing() {
+        let mut weights = [0.0f32; 128]; // 2 blocks of 64
+        weights[0] = 1.5;
+        weights[64] = -2.0;
+
+        let mut crystal = SquashedModelCrystal::<16>::new();
+        let squashed = SafeTensorsModelSquasher::squash_f32_tensor(&weights, &mut crystal);
+
+        assert_eq!(squashed, 2);
+        assert_eq!(crystal.count, 2);
+        assert!(crystal.header.is_valid());
+        assert_eq!(crystal.centroids[0].pos_mask & 1, 1);
+        assert_eq!(crystal.centroids[1].neg_mask & 1, 1);
     }
 }

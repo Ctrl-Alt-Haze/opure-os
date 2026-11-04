@@ -23,3 +23,4 @@ opure-wasm = { path = "../../crates/opure-wasm" }
 opure-hypervisor = { path = "../../crates/opure-hypervisor" }
 opure-fpga = { path = "../../crates/opure-fpga" }
 opure-fs = { path = "../../crates/opure-fs" }
+opure-audio = { path = "../../crates/opure-audio" }

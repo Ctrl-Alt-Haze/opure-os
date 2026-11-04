@@ -102,6 +102,60 @@ function setIntent(intentKey) {
   if (renderer) {
     renderer.setIntent(intentKey);
   }
+
+  playScottishSpeech(intentKey);
+}
+
+function playScottishSpeech(intentKey) {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    const duration = 0.75;
+    const sampleRate = 22050;
+    const numSamples = Math.floor(sampleRate * duration);
+    const buffer = audioCtx.createBuffer(1, numSamples, sampleRate);
+    const data = buffer.getChannelData(0);
+
+    let f1 = 730, f2 = 1090;
+    if (intentKey === 'urgent') { f1 = 270; f2 = 2290; }
+    else if (intentKey === 'thermal') { f1 = 530; f2 = 1840; }
+    else if (intentKey === 'chaotic') { f1 = 570; f2 = 840; }
+    else if (intentKey === 'patch') { f1 = 490; f2 = 1350; }
+
+    let y1_1 = 0, y2_1 = 0;
+    let y1_2 = 0, y2_2 = 0;
+    let pitch = 125;
+    let phase = 0;
+
+    for (let i = 0; i < numSamples; i++) {
+      phase += pitch / sampleRate;
+      if (phase >= 1.0) phase -= 1.0;
+      const exc = phase < 0.3 ? (phase / 0.3) : (1.0 - (phase - 0.3) / 0.7);
+
+      const r1 = 0.95, theta1 = 2 * Math.PI * f1 / sampleRate;
+      const b1_1 = 2 * r1 * Math.cos(theta1), b2_1 = -r1 * r1;
+      const out1 = (1 - r1) * exc + b1_1 * y1_1 + b2_1 * y2_1;
+      y2_1 = y1_1; y1_1 = out1;
+
+      const r2 = 0.94, theta2 = 2 * Math.PI * f2 / sampleRate;
+      const b1_2 = 2 * r2 * Math.cos(theta2), b2_2 = -r2 * r2;
+      const out2 = (1 - r2) * exc + b1_2 * y1_2 + b2_2 * y2_2;
+      y2_2 = y1_2; y1_2 = out2;
+
+      // Soft envelope
+      const env = Math.sin((i / numSamples) * Math.PI);
+      data[i] = (out1 * 0.7 + out2 * 0.3) * env * 0.3;
+    }
+
+    const source = audioCtx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioCtx.destination);
+    source.start();
+  } catch (e) {
+    // Audio autoplay restrictions
+  }
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -109,6 +163,36 @@ window.addEventListener('DOMContentLoaded', async () => {
   renderer = new CyberRenderer(canvas);
 
   await initWasm();
+
+  // Chat Prompt Console
+  const chatInput = document.getElementById('chat-input');
+  const chatBtn = document.getElementById('chat-submit-btn');
+
+  const handleChat = () => {
+    const prompt = chatInput.value.trim().toLowerCase();
+    if (!prompt) return;
+
+    let matchedIntent = 'nominal';
+    if (prompt.includes('urgent') || prompt.includes('task') || prompt.includes('compile') || prompt.includes('build') || prompt.includes('fast')) {
+      matchedIntent = 'urgent';
+    } else if (prompt.includes('thermal') || prompt.includes('hot') || prompt.includes('temp') || prompt.includes('throttle')) {
+      matchedIntent = 'thermal';
+    } else if (prompt.includes('diverg') || prompt.includes('chaos') || prompt.includes('wild') || prompt.includes('fractal')) {
+      matchedIntent = 'chaotic';
+    } else if (prompt.includes('crash') || prompt.includes('fault') || prompt.includes('patch') || prompt.includes('splice')) {
+      matchedIntent = 'patch';
+    } else {
+      matchedIntent = 'nominal';
+    }
+
+    setIntent(matchedIntent);
+    chatInput.value = '';
+  };
+
+  chatBtn.addEventListener('click', handleChat);
+  chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleChat();
+  });
 
   // Intent Buttons
   document.querySelectorAll('.intent-btn').forEach(btn => {

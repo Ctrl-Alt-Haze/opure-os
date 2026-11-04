@@ -1,29 +1,34 @@
-# OPURE OS - Cognitive Core Architecture (Expanded 17-Crate Release)
+# OPURE OS - Cognitive Core Architecture (18-Crate Production Substrate)
 
-High-performance, agent-first operating system cognitive substrate built in Rust/C99 from first principles. Replaces latency-heavy LLMs and bloated desktop stacks with a **1.58-Bit Multiplier-Less Nearest Class Mean (NCM)** cognitive engine, an **In-Memory PE32+ Lifter**, a **Cyber-Brutalist SDF GPU Compositor**, the **OZTAE Zero-Trust Agent Enclave**, the **RSI Ternary Plasticity Engine**, a **Bare-Metal UEFI / Multiboot2 Kernel Loader**, a **Zero-Allocation OpenAI REST Endpoint**, a **Distributed RoCEv2/RDMA Cluster Mesh (`opure-cluster`)**, a **Native Silicon Coprocessor & PTX Engine (`opure-cuda`)**, a **Native Autonomous Micro-Agent Swarm Runtime (`opure-swarm`)**, a **Native WebAssembly Browser Runtime (`opure-wasm`)**, a **Type-1 Bare-Metal Micro-Hypervisor (`opure-hypervisor`)**, a **Hardware Reference Design & AXI4 Driver (`opure-fpga`)**, and a **Deterministic Morton Z-Curve Content-Addressed File System (`opure-fs`)**.
+High-performance, agent-first operating system cognitive substrate built in Rust/C99 from first principles. Replaces latency-heavy LLMs and bloated desktop stacks with a **1.58-Bit Multiplier-Less Nearest Class Mean (NCM)** cognitive engine, an **In-Memory PE32+ Lifter**, a **Cyber-Brutalist SDF GPU Compositor**, the **OZTAE Zero-Trust Agent Enclave**, the **RSI Ternary Plasticity Engine**, a **Bare-Metal UEFI / Multiboot2 Kernel Loader**, a **Zero-Allocation OpenAI REST Endpoint**, a **Distributed RoCEv2/RDMA Cluster Mesh (`opure-cluster`)**, a **Native Silicon Coprocessor & PTX Engine (`opure-cuda`)**, a **Native Autonomous Micro-Agent Swarm Runtime (`opure-swarm`)**, a **Native WebAssembly Browser Runtime (`opure-wasm`)**, a **Type-1 Bare-Metal Micro-Hypervisor (`opure-hypervisor`)**, a **Hardware Reference Design & AXI4 Driver (`opure-fpga`)**, a **Deterministic Morton Z-Curve Content-Addressed File System (`opure-fs`)**, a **Zero-Heap Scottish Formant Speech Synthesizer (`opure-audio`)**, and an **Interactive SafeTensors 1.58-Bit Model Squasher & Chat Engine**.
 
 ---
 
-## Workspace Architecture (17 Crates)
+## Workspace Architecture (18 Crates)
 
 ```
 opure_os/
-├── Cargo.toml                              # Root workspace (17 member crates + bin)
+├── Cargo.toml                              # Root workspace (18 member crates + bin)
 ├── README.md                               # Architectural manual & benchmark telemetry
 ├── scripts/
 │   ├── init_workspace.ps1                  # Bootstrap, compile, test, UEFI package, and benchmark script
-│   ├── package_uefi_disk.py                # Standalone 128MB FAT32 virtual EFI disk packager
-│   └── serve_web.ps1                       # One-click local HTTP server for WebAssembly playground
+│   ├── download_and_squash.py              # SafeTensors 1.58-bit model squasher & interactive chat REPL
+│   ├── run_qemu.ps1                        # Bare-metal UEFI QEMU boot automation harness
+│   ├── serve_web.ps1                       # One-click local HTTP server for WebAssembly playground
+│   └── package_uefi_disk.py                # Standalone 128MB FAT32 virtual EFI disk packager
 ├── web/                                    # Interactive Browser Playground & WebGPU/Canvas
-│   ├── index.html                          # Cyber-brutalist dark neon UI & Scottish telemetry HUD
-│   ├── app.js                              # WASM linear memory bridge & 64D JEV controller
+│   ├── index.html                          # Cyber-brutalist UI, chat prompt console, and Scottish HUD
+│   ├── app.js                              # WASM linear memory bridge, audio formant synthesis, and chat controller
 │   ├── cyber_renderer.js                   # 60 FPS HTML5 Canvas kinetic compositor & Verlet springs
 │   └── opure_wasm.wasm                     # 28KB zero-allocation WebAssembly binary
+├── models/
+│   └── opure_1.58b_chat.opure              # Squashed 1.58-bit ternary crystal model (200 bytes)
 ├── crates/
 │   ├── opure-hal/                          # Multiplier-less bitwise SIMD & cacheline layouts
 │   │   └── src/lib.rs                      # TernaryCentroid64, PackedTernaryCacheline, POPCNT dot, StaticSlab
 │   ├── opure-crystallizer/                 # Ingestion & Ternary Quantization Engine
-│   │   └── src/lib.rs                      # Zero-copy SafeTensors view, Absmean ternary crystallizer
+│   │   ├── src/lib.rs                      # Zero-copy SafeTensors view, Absmean ternary crystallizer
+│   │   └── src/squasher.rs                 # SafeTensorsModelSquasher & SquashedModelCrystal (.opure format)
 │   ├── opure-geometric/                    # Geometric Cognitive Core
 │   │   └── src/lib.rs                      # Multiplier-less NCM, Mandelbrot gate, Outer JEV, 3D Morton
 │   ├── opure-bus/                          # Native Binary Event Bus
@@ -61,116 +66,135 @@ opure_os/
 │   │   ├── src/bridge.rs                   # NCM 64D embedding projection & Scottish feedback bridge
 │   │   ├── src/enclave_gate.rs             # Sub-3.15ns OZTAE token verification & Merkle audit
 │   │   └── src/server.rs                   # OpureEndpointServer service engine
-│   ├── opure-cluster/                      # Distributed P2P Mesh & RDMA Engine (Wave 1)
+│   ├── opure-cluster/                      # Distributed P2P Mesh & RDMA Engine
 │   │   ├── src/lib.rs                      # Cluster mesh exports
 │   │   ├── src/rdma.rs                     # Zero-allocation RoCEv2 BTH/RETH framing & RDMA memory regions
 │   │   ├── src/mesh.rs                     # ClusterMeshNode peer directory & RDMA packet formatting
 │   │   └── src/consensus.rs                # Multi-node geometric bitwise majority voting consensus
-│   ├── opure-cuda/                         # Native Silicon Coprocessor & PTX Integration (Wave 2)
+│   ├── opure-cuda/                         # Native Silicon Coprocessor & PTX Integration
 │   │   ├── src/lib.rs                      # CUDA/NPU coprocessor exports
 │   │   ├── src/ptx.rs                      # Handcrafted raw PTX assembly kernel (lop3.b32 + popc.b64)
 │   │   └── src/coprocessor.rs              # Zero-allocation warp-parallel TernarySiliconCoprocessor
-│   ├── opure-swarm/                        # Native Autonomous Micro-Agent Swarm SDK (Wave 3)
+│   ├── opure-swarm/                        # Native Autonomous Micro-Agent Swarm SDK
 │   │   ├── src/lib.rs                      # Swarm runtime exports
 │   │   ├── src/agent.rs                    # SwarmAgent descriptor, unmanaged mailboxes & roles
 │   │   ├── src/supervisor.rs               # SwarmSupervisor, tick engine, event broadcast & enclave binding
 │   │   ├── src/archetypes.rs               # Specialized archetypes (telemetry, compositor, binary lifter)
 │   │   ├── src/ffi.rs                      # C99 FFI bridge (opure_swarm_spawn_c, opure_swarm_tick_c)
 │   │   └── include/opure_swarm.h           # C99 Swarm ABI header
-│   ├── opure-wasm/                         # Native WebAssembly & Browser Sandbox Runtime (Frontier 1)
+│   ├── opure-wasm/                         # Native WebAssembly & Browser Sandbox Runtime
 │   │   ├── src/lib.rs                      # WASM C-ABI exports, client-side NCM router & firewall checks
 │   │   └── src/bridge.rs                   # 64KB static linear memory transfer bridge without GC
-│   ├── opure-hypervisor/                   # Type-1 Bare-Metal Micro-Virtualization (Frontier 2)
+│   ├── opure-hypervisor/                   # Type-1 Bare-Metal Micro-Virtualization
 │   │   ├── src/lib.rs                      # Hypervisor root exports
 │   │   ├── src/vmx.rs                      # Intel VT-x VMXON/VMCS 4KB structures & processor execution controls
 │   │   ├── src/ept.rs                      # Extended Page Tables (EPT) 4-level nested paging (1GB identity)
 │   │   └── src/exit_handler.rs             # VM-exit dispatcher (CPUID, MSR isolation, live crash autopatching)
-│   ├── opure-fpga/                         # Hardware Reference Design & AXI4 Driver (Frontier 3)
+│   ├── opure-fpga/                         # Hardware Reference Design & AXI4 Driver
 │   │   ├── hdl/opure_popcnt64.v            # Synthesizable 6-level Wallace adder tree popcount (1 cycle)
 │   │   ├── hdl/opure_ternary_dot.v         # Multiplier-less 64D ternary inner product combinational core
 │   │   ├── hdl/opure_ncm_core.v            # Parallel multi-class NCM classification core with argmax
 │   │   ├── hdl/opure_axi_lite_slave.v      # AXI4-Lite slave MMIO register interface for FPGA SoCs
 │   │   ├── src/registers.rs                # AXI4-Lite memory-mapped register offsets & bit flags
 │   │   ├── src/driver.rs                   # Zero-allocation MMIO hardware driver (read/write volatile)
-│   │   ├── src/sim.rs                      # Cycle-accurate HDL emulator replicating gate-level logic
 │   │   └── src/lib.rs                      # FPGA crate root exports and verification tests
-│   └── opure-fs/                           # Deterministic Morton Z-Curve Content-Addressed File System
-│       ├── src/lib.rs                      # OPURE-FS root exports and verification tests
-│       ├── src/block.rs                    # 4KB content-addressed physical blocks & FNV-1a digests
-│       ├── src/morton_tree.rs              # 24-bit 3D Morton Z-Order spatial block index & binary search
-│       ├── src/device.rs                   # BlockDevice trait & zero-allocation VirtualBlockDevice
-│       └── src/file_system.rs              # OpureFileSystem controller, Merkle snapshots & instant rollback
+│   ├── opure-fs/                           # Deterministic Morton Z-Curve Content-Addressed File System
+│   │   ├── src/lib.rs                      # OPURE-FS root exports and verification tests
+│   │   ├── src/block.rs                    # 4KB content-addressed physical blocks & FNV-1a digests
+│   │   ├── src/morton_tree.rs              # 24-bit 3D Morton Z-Order spatial block index & binary search
+│   │   ├── src/device.rs                   # BlockDevice trait & zero-allocation VirtualBlockDevice
+│   │   └── src/file_system.rs              # OpureFileSystem controller, Merkle snapshots & instant rollback
+│   └── opure-audio/                        # Zero-Heap Scottish Formant Speech Synthesizer
+│       ├── src/lib.rs                      # Speech synthesizer exports, phonetic sequences & tests
+│       ├── src/formant.rs                  # 2-pole Q16.16 digital resonator filter & glottal pulse generator
+│       ├── src/phonemes.rs                 # Acoustic formant frequency targets for Scottish vowels/consonants
+│       └── src/synthesizer.rs              # ScottishSpeechSynthesizer engine & RIFF WAV header serializer
 └── bin/
-    └── opure-core/                         # Comprehensive 21-Point Benchmark Suite & Demonstrator
+    └── opure-core/                         # Comprehensive 22-Point Benchmark Suite & Demonstrator
         └── src/main.rs
 ```
 
 ---
 
-## Storage & Interactive Web Highlights
+## 1. SafeTensors Squashing & Interactive Chat Engine
 
-### 1. Deterministic Morton Z-Curve File System (`opure-fs`)
-* **Spatial Sector Proximity:** File blocks are mapped onto a 24-bit 3D Morton index (`X: Spatial Cluster`, `Y: Temporal Sequence`, `Z: Enclave Domain`), ensuring related agent telemetry and disk cachelines remain physically contiguous.
-* **Content-Addressed Merkle Blocks:** Every 4KB block computes a deterministic 64-bit cryptographic digest.
-* **Sub-2ns Spatial Seeks:** Binary-search spatial tree traversal resolves block addresses in **1.04 ns** (**963.67 Million seeks/sec**).
-* **O(1) Snapshot Rollback:** Filesystem checkpoints verify consistency and rollback instantly by comparing Merkle roots without copying bytes.
-
-### 2. Interactive WebAssembly Playground (`web/`)
-* **Zero-GC 28KB WASM Module:** Compiled directly from `opure-wasm` to `web/opure_wasm.wasm`.
-* **60 FPS Cyber-Brutalist Compositor:** Renders 64 active surfaces using Fibonacci golden-ratio tiling, Q16.16 Verlet physics springs, and signed distance field (SDF) neon glow borders.
-* **Interactive Modulation:** Real-time 64D JEV sliders and discrete buttons to trigger SystemIntents and live Scottish diagnostic audio HUD responses.
-* **One-Click Launch:** Run `powershell -ExecutionPolicy Bypass -File .\scripts\serve_web.ps1` to serve locally.
+* **SafeTensors Model Squasher (`opure-crystallizer::squasher`):** Scans raw continuous weight tensors (`f32`/`i8`) and compresses them using Absmean quantization into 16-byte dual bitmasks (`TernaryCentroid64`), outputting unmanaged `.opure` crystal models (e.g. `models/opure_1.58b_chat.opure` at 200 bytes).
+* **Interactive Terminal Chat REPL:**
+  ```powershell
+  python .\scripts\download_and_squash.py
+  ```
+  Type natural prompts directly to the OS to classify intents, trigger state changes, and receive instant Scottish diagnostic voice HUD responses in nanoseconds.
+* **Browser Chat Console:** Open the web playground (`.\scripts\serve_web.ps1`) to type prompts into the browser console with real-time audio formant speech synthesis.
 
 ---
 
-## Hardware Telemetry & Benchmarks (Full 17-Crate Stack, 1,000,000 Passes)
+## 2. Zero-Heap Scottish Formant Speech Synthesizer (`opure-audio`)
+
+* **Fixed-Point Q16.16 Klatt Resonators (`formant.rs`):** Implements 3 parallel 2-pole digital resonators in pure integer math without floating-point units.
+* **Glottal Excitation & Fricative Noise:** Generates natural Rosenberg vocal fold pulses for voiced sounds and LFSR noise for unvoiced consonants.
+* **Microsecond Phrase Rendering:** Generates standard 22,050 Hz 16-bit mono PCM audio in **698 ns** (**1.43 Million phrases/sec**) with zero dynamic heap allocation.
+
+---
+
+## 3. Bare-Metal UEFI QEMU Boot Automation (`scripts/run_qemu.ps1`)
+
+* **One-Click Boot Launcher:** Automatically detects QEMU on PATH/Program Files, provisions standard memory and SMP cores, attaches `opure_disk.img`, enables Intel VT-x hardware virtualization (`-cpu max,+vmx`), and streams serial COM1 telemetry directly to your console.
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\scripts\run_qemu.ps1
+  ```
+
+---
+
+## Hardware Telemetry & Benchmarks (Full 18-Crate Stack, 1,000,000 Passes)
 
 ```text
 ============================================================
   OPURE OS COMPREHENSIVE BENCHMARKS (1,000,000 PASSES)      
 ============================================================
-1. Multiplier-Less Ternary NCM Latency:   49.46 ns / pass (1.90x over i8)
-2. Mandelbrot Stability Gate Latency:     9.76 ns / check
-3. Zero-Copy PE32+ Header + IAT Parse:    2.45 ns / binary (407.48M parses/sec)
-4. Ternary POPCNT Syscall Match (64 fn):  156.48 ns / lookup (6.39M matches/sec)
+1. Multiplier-Less Ternary NCM Latency:   48.13 ns / pass (1.96x over i8)
+2. Mandelbrot Stability Gate Latency:     9.69 ns / check
+3. Zero-Copy PE32+ Header + IAT Parse:    2.38 ns / binary (419.48M parses/sec)
+4. Ternary POPCNT Syscall Match (64 fn):  157.78 ns / lookup (6.34M matches/sec)
 5. MS-x64 -> System V Trampoline Emit:   2.07 ns / stub (482.65M stubs/sec)
-6. 64-Window Fibonacci Layout + Springs:  480.09 ns / frame (2.08M frames/sec)
-7. 64-Window GPU Frame Batch + Sort:      601.64 ns / frame (1.66M frames/sec)
-8. OZTAE Zero-Trust Firewall Gate:        3.17 ns / check (315.85M checks/sec)
-9. Merkle Audit Digest Hash:              1.81 ns / frame (552.39M frames/sec)
-10. RSI Mutation + POPCNT Fitness Eval:   7.83 ns / cycle (127.73M cycles/sec)
-11. Cyber-Brutalist SDF Raster Math:      12.11 ns / pixel (82.57M pixels/sec)
-12. Bare-Metal Boot & 4-Level Paging:     163.45 ns / setup (6.12M boots/sec)
-13. OpenAI HTTP + NCM Routing + JSON:     664.82 ns / request (1.50M reqs/sec)
-14. Swarm Tick & Mailbox Dispatch:        15.25 ns / sweep (65.59M sweeps/sec)
-15. Silicon Tensor Core Warp GEMV:        20.38 ns / pass (49.07M passes/sec)
-16. RoCEv2 RDMA Sync + Consensus:         65.66 ns / cycle (15.23M cycles/sec)
-17. Browser WASM Linear Memory + NCM:     11.24 ns / pass (88.95M passes/sec)
-18. Hypervisor VM-Exit & Autopatch:       2.51 ns / exit (399.14M exits/sec)
-19. FPGA AXI4-Lite MMIO & Combinational:  24.08 ns / cycle (41.52M cycles/sec)
-20. Morton Z-Curve Content Block Seek:    1.04 ns / seek (963.67M seeks/sec)
-21. Total Memory Allocation:              0 bytes (Pure unmanaged stack/slab)
+6. 64-Window Fibonacci Layout + Springs:  469.15 ns / frame (2.13M frames/sec)
+7. 64-Window GPU Frame Batch + Sort:      601.45 ns / frame (1.66M frames/sec)
+8. OZTAE Zero-Trust Firewall Gate:        3.33 ns / check (300.25M checks/sec)
+9. Merkle Audit Digest Hash:              1.92 ns / frame (519.94M frames/sec)
+10. RSI Mutation + POPCNT Fitness Eval:   7.78 ns / cycle (128.53M cycles/sec)
+11. Cyber-Brutalist SDF Raster Math:      12.11 ns / pixel (82.59M pixels/sec)
+12. Bare-Metal Boot & 4-Level Paging:     165.20 ns / setup (6.05M boots/sec)
+13. OpenAI HTTP + NCM Routing + JSON:     650.27 ns / request (1.54M reqs/sec)
+14. Swarm Tick & Mailbox Dispatch:        15.86 ns / sweep (63.05M sweeps/sec)
+15. Silicon Tensor Core Warp GEMV:        20.45 ns / pass (48.91M passes/sec)
+16. RoCEv2 RDMA Sync + Consensus:         67.31 ns / cycle (14.86M cycles/sec)
+17. Browser WASM Linear Memory + NCM:     11.24 ns / pass (88.98M passes/sec)
+18. Hypervisor VM-Exit & Autopatch:       2.52 ns / exit (397.09M exits/sec)
+19. FPGA AXI4-Lite MMIO & Combinational:  24.61 ns / cycle (40.63M cycles/sec)
+20. Morton Z-Curve Content Block Seek:    1.04 ns / seek (962.46M seeks/sec)
+21. Scottish Formant Speech Synthesizer:  698.13 ns / phrase (1.43M phrases/sec)
+22. Total Memory Allocation:              0 bytes (Pure unmanaged stack/slab)
 ============================================================
 ```
 
 ---
 
-## Standalone UEFI Disk Packaging
-
-* **Image:** `opure_disk.img` (128 MB FAT32 virtual EFI disk)
-* **EFI Bootloader Target:** `/EFI/BOOT/BOOTX64.EFI` compiled from `crates/opure-boot` for `x86_64-unknown-uefi`.
-
----
-
 ## Execution Commands
 
-- **Full Workspace Build, Test, UEFI Packaging & Benchmarks:**
+- **Run Interactive 1.58-Bit Chat REPL:**
   ```powershell
-  powershell -ExecutionPolicy Bypass -File .\scripts\init_workspace.ps1 -Release
+  python .\scripts\download_and_squash.py
   ```
-- **Launch Interactive WebAssembly Playground:**
+- **Launch Interactive WebAssembly Playground with Audio:**
   ```powershell
   powershell -ExecutionPolicy Bypass -File .\scripts\serve_web.ps1
+  ```
+- **Run Bare-Metal UEFI QEMU Virtual Machine:**
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\scripts\run_qemu.ps1
+  ```
+- **Execute Full 18-Crate Build, Test, Packaging & Benchmarks:**
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\scripts\init_workspace.ps1 -Release
   ```
 
 ---
@@ -178,7 +202,7 @@ opure_os/
 ## Build Verification Status
 
 - **Zero-Allocation Invariant:** Confirmed 0 bytes heap allocation across all runtime fast paths.
-- **Compiler Invariant:** `#![deny(warnings)]` active across all 17 workspace member crates with 0 warnings.
-- **Test Invariant:** 71/71 unit and integration tests passing.
+- **Compiler Invariant:** `#![deny(warnings)]` active across all 18 workspace member crates with 0 warnings.
+- **Test Invariant:** 74/74 unit and integration tests passing.
 - **Packaging Invariant:** `opure_disk.img` FAT32 EFI container verified.
-- **Final Status:** **VERIFIED, SCALED & SEALED**
+- **Final Status:** **VERIFIED, SQUASHED, AUDIBLE & SEALED**

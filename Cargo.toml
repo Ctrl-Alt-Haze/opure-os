@@ -18,6 +18,7 @@ members = [
     "crates/opure-hypervisor",
     "crates/opure-fpga",
     "crates/opure-fs",
+    "crates/opure-audio",
     "bin/opure-core",
 ]
 

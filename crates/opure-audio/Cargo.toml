@@ -1,0 +1,17 @@
+[package]
+name = "opure-audio"
+version = "0.1.0"
+edition = "2021"
+authors = ["OPURE Core Architecture Team"]
+license = "Apache-2.0 OR MIT"
+description = "Zero-Heap Fixed-Point Scottish Formant Speech Synthesizer for OPURE OS"
+
+[dependencies]
+opure-hal = { path = "../opure-hal" }
+opure-bus = { path = "../opure-bus" }
+
+[lib]
+crate-type = ["rlib"]
+
+[features]
+default = []

@@ -3,6 +3,14 @@
 version = 4
 
 [[package]]
+name = "opure-audio"
+version = "0.1.0"
+dependencies = [
+ "opure-bus",
+ "opure-hal",
+]
+
+[[package]]
 name = "opure-boot"
 version = "0.1.0"
 dependencies = [
@@ -33,6 +41,7 @@ dependencies = [
 name = "opure-core"
 version = "0.1.0"
 dependencies = [
+ "opure-audio",
  "opure-boot",
  "opure-bus",
  "opure-cluster",

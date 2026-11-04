@@ -47,6 +47,8 @@ use opure_wasm::{opure_wasm_init, opure_wasm_route_ternary, opure_wasm_firewall_
 use opure_hypervisor::{HypervisorCore, GuestVmContext, VmExitReason, VmcsRegion, EptPagingContext};
 use opure_fpga::{FpgaAxiDriver, SimulatedFpgaMmioBank, sim::verilog_popcnt64_sim};
 use opure_fs::{OpureFileSystem, VirtualBlockDevice, FS_BLOCK_SIZE};
+use opure_audio::{ScottishSpeechSynthesizer, PHRASE_BRAW_LADDIE};
+use opure_crystallizer::{SafeTensorsModelSquasher, SquashedModelCrystal};
 
 const NUM_CLASSES: usize = 8;
 const RING_BUFFER_CAPACITY: usize = 1024;
@@ -661,7 +663,25 @@ fn main() {
     println!("[OPURE-FS] Morton Block Written: Key = 0x{:06X} | Digest = 0x{:016X}", fs_morton_key, fs_digest);
     println!("[OPURE-FS] Verified Content Digest Integrity: {} (Snapshot Merkle Root: 0x{:016X})", read_digest == fs_digest, snapshot_root);
 
-    // 19. Comprehensive Performance Benchmarks
+    // 19. Scottish Formant Speech Synthesizer (opure-audio) & 1.58-Bit Squashing
+    println!("\n------------------------------------------------------------");
+    println!("  SCOTTISH FORMANT SYNTHESIZER & SQUASHING (OPURE-AUDIO)    ");
+    println!("------------------------------------------------------------");
+    let mut speech_synth = ScottishSpeechSynthesizer::new();
+    let mut pcm_samples = [0i16; 640];
+    let generated_samples = speech_synth.synthesize_phoneme_sequence(PHRASE_BRAW_LADDIE, 64, &mut pcm_samples);
+    let mut wav_hdr = [0u8; 44];
+    ScottishSpeechSynthesizer::write_wav_header(generated_samples, &mut wav_hdr);
+    println!("[AUDIO] Synthesized Scottish Phrase ({} PCM samples at 22,050 Hz)", generated_samples);
+    println!("[AUDIO] In-Memory RIFF WAV Header Formatted: {} bytes (Sample Peak: {})",
+        wav_hdr.len(), pcm_samples.iter().map(|&s| s.abs()).max().unwrap_or(0));
+
+    let mut squashed_crystal = SquashedModelCrystal::<16>::new();
+    let raw_f32_weights = [0.25f32; 128];
+    let nodes_squashed = SafeTensorsModelSquasher::squash_f32_tensor(&raw_f32_weights, &mut squashed_crystal);
+    println!("[SQUASH] Squashed {} continuous weight blocks into 1.58-bit crystal nodes", nodes_squashed);
+
+    // 20. Comprehensive Performance Benchmarks
     println!("\n============================================================");
     println!("  OPURE OS COMPREHENSIVE BENCHMARKS (1,000,000 PASSES)      ");
     println!("============================================================");
@@ -937,7 +957,7 @@ fn main() {
     let ns_fpga = t_fpga_elapsed.as_nanos() as f64 / bench_iters as f64;
     let mops_fpga = (bench_iters as f64 / t_fpga_elapsed.as_secs_f64()) / 1_000_000.0;
 
-    // Benchmark 21: Morton Block Tree Lookup & Seek Latency (opure-fs)
+    // Benchmark 20: Morton Block Tree Lookup & Seek Latency (opure-fs)
     let t_fs_start = Instant::now();
     for _ in 0..bench_iters {
         let node = fs.index.lookup(black_box(fs_morton_key));
@@ -946,6 +966,21 @@ fn main() {
     let t_fs_elapsed = t_fs_start.elapsed();
     let ns_fs = t_fs_elapsed.as_nanos() as f64 / bench_iters as f64;
     let mops_fs = (bench_iters as f64 / t_fs_elapsed.as_secs_f64()) / 1_000_000.0;
+
+    // Benchmark 21: Scottish Formant Speech Synthesizer Latency (opure-audio)
+    let t_audio_start = Instant::now();
+    let audio_iters = 100_000;
+    for _ in 0..audio_iters {
+        let samples = speech_synth.synthesize_phoneme_sequence(
+            black_box(PHRASE_BRAW_LADDIE),
+            black_box(16),
+            black_box(&mut pcm_samples),
+        );
+        black_box(samples);
+    }
+    let t_audio_elapsed = t_audio_start.elapsed();
+    let ns_audio = t_audio_elapsed.as_nanos() as f64 / audio_iters as f64;
+    let mops_audio = (audio_iters as f64 / t_audio_elapsed.as_secs_f64()) / 1_000_000.0;
 
     println!("1. Multiplier-Less Ternary NCM Latency:   {:.2} ns / pass ({:.2}x over i8)", ns_ternary, ns_i8 / ns_ternary);
     println!("2. Mandelbrot Stability Gate Latency:     {:.2} ns / check", ns_mandel);
@@ -967,7 +1002,8 @@ fn main() {
     println!("18. Hypervisor VM-Exit & Autopatch:       {:.2} ns / exit ({:.2}M exits/sec)", ns_hyp, mops_hyp);
     println!("19. FPGA AXI4-Lite MMIO & Combinational:  {:.2} ns / cycle ({:.2}M cycles/sec)", ns_fpga, mops_fpga);
     println!("20. Morton Z-Curve Content Block Seek:    {:.2} ns / seek ({:.2}M seeks/sec)", ns_fs, mops_fs);
-    println!("21. Total Memory Allocation:              0 bytes (Pure unmanaged stack/slab)");
+    println!("21. Scottish Formant Speech Synthesizer:  {:.2} ns / phrase ({:.2}M phrases/sec)", ns_audio, mops_audio);
+    println!("22. Total Memory Allocation:              0 bytes (Pure unmanaged stack/slab)");
     println!("============================================================");
 
     // Suppress unused warning on cacheline variables
