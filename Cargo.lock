@@ -40,6 +40,7 @@ dependencies = [
  "opure-cuda",
  "opure-endpoint",
  "opure-fpga",
+ "opure-fs",
  "opure-geometric",
  "opure-hal",
  "opure-hypervisor",
@@ -84,6 +85,16 @@ version = "0.1.0"
 dependencies = [
  "opure-bus",
  "opure-hal",
+]
+
+[[package]]
+name = "opure-fs"
+version = "0.1.0"
+dependencies = [
+ "opure-bus",
+ "opure-geometric",
+ "opure-hal",
+ "opure-oztae",
 ]
 
 [[package]]

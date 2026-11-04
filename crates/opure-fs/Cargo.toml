@@ -1,0 +1,19 @@
+[package]
+name = "opure-fs"
+version = "0.1.0"
+edition = "2021"
+authors = ["OPURE Core Architecture Team"]
+license = "Apache-2.0 OR MIT"
+description = "Deterministic Morton Z-Curve Content-Addressed File System for OPURE OS"
+
+[dependencies]
+opure-hal = { path = "../opure-hal" }
+opure-geometric = { path = "../opure-geometric" }
+opure-bus = { path = "../opure-bus" }
+opure-oztae = { path = "../opure-oztae" }
+
+[lib]
+crate-type = ["rlib"]
+
+[features]
+default = []

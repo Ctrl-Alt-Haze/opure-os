@@ -166,6 +166,12 @@ pub extern "C" fn opure_wasm_swarm_tick(_step_delta: u32) -> u32 {
     }
 }
 
+#[cfg(all(target_arch = "wasm32", not(test)))]
+#[panic_handler]
+fn panic(_info: &core::panic::PanicInfo) -> ! {
+    core::arch::wasm32::unreachable();
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

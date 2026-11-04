@@ -38,8 +38,10 @@ if ($Release) {
 
 # 4. Compile Standalone UEFI Kernel & Package Virtual Disk
 if ($PackageUefi) {
-    Write-Host "`n[4/5] Building Bare-Metal UEFI Bootloader & Packaging Disk Image..." -ForegroundColor Yellow
+    Write-Host "`n[4/5] Building Bare-Metal UEFI Bootloader, WASM Bundle & Packaging Disk Image..." -ForegroundColor Yellow
     cargo build -p opure-boot --target x86_64-unknown-uefi --release
+    cargo rustc -p opure-wasm --target wasm32-unknown-unknown --release --crate-type cdylib
+    Copy-Item "$PSScriptRoot\..\target\wasm32-unknown-unknown\release\opure_wasm.wasm" "$PSScriptRoot\..\web\opure_wasm.wasm" -Force
     python "$PSScriptRoot\package_uefi_disk.py"
 }
 

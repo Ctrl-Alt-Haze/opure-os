@@ -46,6 +46,7 @@ use opure_cluster::{ClusterMeshNode, GeometricConsensus, RoCeProtocol};
 use opure_wasm::{opure_wasm_init, opure_wasm_route_ternary, opure_wasm_firewall_verify, opure_wasm_swarm_tick, bridge::write_centroid_to_buffer};
 use opure_hypervisor::{HypervisorCore, GuestVmContext, VmExitReason, VmcsRegion, EptPagingContext};
 use opure_fpga::{FpgaAxiDriver, SimulatedFpgaMmioBank, sim::verilog_popcnt64_sim};
+use opure_fs::{OpureFileSystem, VirtualBlockDevice, FS_BLOCK_SIZE};
 
 const NUM_CLASSES: usize = 8;
 const RING_BUFFER_CAPACITY: usize = 1024;
@@ -644,7 +645,23 @@ fn main() {
     println!("[FPGA] Synthesizable Combinational 64-Bit Wallace Tree Popcount: {} bits", fpga_popcnt);
     println!("[FPGA] AXI4-Lite MMIO Core Executed (1 Clock Cycle): Score = {} | Intent ID = {}", fpga_score, fpga_intent);
 
-    // 18. Comprehensive Performance Benchmarks
+    // 18. Deterministic Morton Z-Curve Content-Addressed File System (opure-fs)
+    println!("\n------------------------------------------------------------");
+    println!("  MORTON CONTENT-ADDRESSED FILE SYSTEM (OPURE-FS)           ");
+    println!("------------------------------------------------------------");
+    let fs_device = VirtualBlockDevice::<16>::new();
+    let mut fs = OpureFileSystem::<_, 16>::format(fs_device).expect("FS format failed");
+    let mut block_data = [0u8; FS_BLOCK_SIZE];
+    block_data[0..28].copy_from_slice(b"OPURE_OS_MERKLE_MORTON_BLOCK");
+    let (fs_morton_key, fs_digest) = fs.write_morton_block(3, 7, 1, &block_data).expect("FS write failed");
+    let mut read_data = [0u8; FS_BLOCK_SIZE];
+    let read_digest = fs.read_morton_block(fs_morton_key, &mut read_data).expect("FS read failed");
+    let snapshot_root = fs.create_snapshot();
+    println!("[OPURE-FS] Formatted 4KB Superblock (Total Blocks: {}, Free: {})", fs.superblock.total_blocks, fs.superblock.free_blocks);
+    println!("[OPURE-FS] Morton Block Written: Key = 0x{:06X} | Digest = 0x{:016X}", fs_morton_key, fs_digest);
+    println!("[OPURE-FS] Verified Content Digest Integrity: {} (Snapshot Merkle Root: 0x{:016X})", read_digest == fs_digest, snapshot_root);
+
+    // 19. Comprehensive Performance Benchmarks
     println!("\n============================================================");
     println!("  OPURE OS COMPREHENSIVE BENCHMARKS (1,000,000 PASSES)      ");
     println!("============================================================");
@@ -920,6 +937,16 @@ fn main() {
     let ns_fpga = t_fpga_elapsed.as_nanos() as f64 / bench_iters as f64;
     let mops_fpga = (bench_iters as f64 / t_fpga_elapsed.as_secs_f64()) / 1_000_000.0;
 
+    // Benchmark 21: Morton Block Tree Lookup & Seek Latency (opure-fs)
+    let t_fs_start = Instant::now();
+    for _ in 0..bench_iters {
+        let node = fs.index.lookup(black_box(fs_morton_key));
+        black_box(node);
+    }
+    let t_fs_elapsed = t_fs_start.elapsed();
+    let ns_fs = t_fs_elapsed.as_nanos() as f64 / bench_iters as f64;
+    let mops_fs = (bench_iters as f64 / t_fs_elapsed.as_secs_f64()) / 1_000_000.0;
+
     println!("1. Multiplier-Less Ternary NCM Latency:   {:.2} ns / pass ({:.2}x over i8)", ns_ternary, ns_i8 / ns_ternary);
     println!("2. Mandelbrot Stability Gate Latency:     {:.2} ns / check", ns_mandel);
     println!("3. Zero-Copy PE32+ Header + IAT Parse:    {:.2} ns / binary ({:.2}M parses/sec)", ns_pe, mops_pe);
@@ -939,7 +966,8 @@ fn main() {
     println!("17. Browser WASM Linear Memory + NCM:     {:.2} ns / pass ({:.2}M passes/sec)", ns_wasm, mops_wasm);
     println!("18. Hypervisor VM-Exit & Autopatch:       {:.2} ns / exit ({:.2}M exits/sec)", ns_hyp, mops_hyp);
     println!("19. FPGA AXI4-Lite MMIO & Combinational:  {:.2} ns / cycle ({:.2}M cycles/sec)", ns_fpga, mops_fpga);
-    println!("20. Total Memory Allocation:              0 bytes (Pure unmanaged stack/slab)");
+    println!("20. Morton Z-Curve Content Block Seek:    {:.2} ns / seek ({:.2}M seeks/sec)", ns_fs, mops_fs);
+    println!("21. Total Memory Allocation:              0 bytes (Pure unmanaged stack/slab)");
     println!("============================================================");
 
     // Suppress unused warning on cacheline variables

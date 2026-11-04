@@ -17,6 +17,7 @@ members = [
     "crates/opure-wasm",
     "crates/opure-hypervisor",
     "crates/opure-fpga",
+    "crates/opure-fs",
     "bin/opure-core",
 ]
 
@@ -25,6 +26,9 @@ version = "0.1.0"
 edition = "2021"
 authors = ["OPURE Core Architecture Team"]
 license = "Apache-2.0 OR MIT"
+
+[profile.dev]
+panic = "abort"
 
 [profile.release]
 opt-level = 3
