@@ -43,6 +43,9 @@ use opure_endpoint::OpureEndpointServer;
 use opure_swarm::{SwarmRole, SwarmSupervisor};
 use opure_cuda::{TernarySiliconCoprocessor, OPURE_TERNARY_TENSOR_PTX};
 use opure_cluster::{ClusterMeshNode, GeometricConsensus, RoCeProtocol};
+use opure_wasm::{opure_wasm_init, opure_wasm_route_ternary, opure_wasm_firewall_verify, opure_wasm_swarm_tick, bridge::write_centroid_to_buffer};
+use opure_hypervisor::{HypervisorCore, GuestVmContext, VmExitReason, VmcsRegion, EptPagingContext};
+use opure_fpga::{FpgaAxiDriver, SimulatedFpgaMmioBank, sim::verilog_popcnt64_sim};
 
 const NUM_CLASSES: usize = 8;
 const RING_BUFFER_CAPACITY: usize = 1024;
@@ -582,7 +585,66 @@ fn main() {
     println!("[CLUSTER] Multi-Node Geometric Consensus Resolved (Consensus L0 Norm: {} bits)",
         consensus_centroid.l0_norm());
 
-    // 15. Comprehensive Performance Benchmarks
+    // 15. Frontier 1: Native WebAssembly & Browser Sandbox Runtime (opure-wasm)
+    println!("\n------------------------------------------------------------");
+    println!("  FRONTIER 1: NATIVE WASM & BROWSER RUNTIME (OPURE-WASM)    ");
+    println!("------------------------------------------------------------");
+    let wasm_status = opure_wasm_init();
+    let wasm_route = opure_wasm_route_ternary(0x0000FFFF, 0x0000FFFF, 0xFFFF0000, 0xFFFF0000);
+    let wasm_intent_id = (wasm_route >> 16) & 0xFFFF;
+    let wasm_score = (wasm_route & 0xFFFF) as i16;
+    let wasm_fw = opure_wasm_firewall_verify(CAP_ALL, 500, 0);
+    let wasm_swarm_active = opure_wasm_swarm_tick(1);
+    let wasm_buf_write = write_centroid_to_buffer(0, &ternary_centroids[0]);
+    println!("[WASM] Engine Online: status = {} | Static Memory Linear Bridge: {}", wasm_status, wasm_buf_write);
+    println!("[WASM] In-Browser NCM Route: Intent ID = {} | Score = {} | Firewall Verified = {}", wasm_intent_id, wasm_score, wasm_fw == 1);
+    println!("[WASM] Web Worker Swarm Active Agents: {}", wasm_swarm_active);
+
+    // 16. Frontier 2: Type-1 Bare-Metal Micro-Virtualization (opure-hypervisor)
+    println!("\n------------------------------------------------------------");
+    println!("  FRONTIER 2: TYPE-1 BARE-METAL HYPERVISOR (OPURE-HYPERVISOR)");
+    println!("------------------------------------------------------------");
+    let mut vmcs = VmcsRegion::new();
+    vmcs.init(VmcsRegion::VMX_REVISION_ID);
+    let mut ept = EptPagingContext::new();
+    ept.setup_identity_mapping_1gb(0x1000, 0x2000, 0x3000);
+    let mut hypervisor_core = HypervisorCore::new();
+    let mut guest_vm = GuestVmContext::new(1, CAP_ALL);
+    guest_vm.guest_rax = 0x40000000;
+    let cpuid_action = hypervisor_core.handle_vm_exit(&mut guest_vm, VmExitReason::Cpuid, 0, 2);
+    let sig_bytes = [
+        (guest_vm.guest_rbx & 0xFF) as u8,
+        ((guest_vm.guest_rbx >> 8) & 0xFF) as u8,
+        ((guest_vm.guest_rbx >> 16) & 0xFF) as u8,
+        ((guest_vm.guest_rbx >> 24) & 0xFF) as u8,
+        (guest_vm.guest_rcx & 0xFF) as u8,
+        ((guest_vm.guest_rcx >> 8) & 0xFF) as u8,
+        ((guest_vm.guest_rcx >> 16) & 0xFF) as u8,
+        ((guest_vm.guest_rcx >> 24) & 0xFF) as u8,
+    ];
+    let sig_str = core::str::from_utf8(&sig_bytes).unwrap_or("OPURE OS");
+    println!("[HYPERVISOR] Root VMX / VMCS Page Initialized (Revision: 0x{:08X})", vmcs.revision_id);
+    println!("[HYPERVISOR] 4-Level Nested EPT Configured (EPTP: 0x{:016X})", ept.ept_pointer(0x1000));
+    println!("[HYPERVISOR] Intercepted Guest CPUID: Paravirtual Signature = \"{}\" | Action: {:?}", sig_str, cpuid_action);
+    guest_vm.guest_rip = 0x00007FFA_DEAD_BEEF;
+    let fault_action = hypervisor_core.handle_vm_exit(&mut guest_vm, VmExitReason::ExceptionOrNmi, 0, 0);
+    println!("[HYPERVISOR] Intercepted Guest Crash: Action = {:?}", fault_action);
+
+    // 17. Frontier 3: Hardware Reference Design (FPGA / Edge Accelerator)
+    println!("\n------------------------------------------------------------");
+    println!("  FRONTIER 3: HARDWARE REFERENCE DESIGN (OPURE-FPGA)        ");
+    println!("------------------------------------------------------------");
+    let fpga_popcnt = verilog_popcnt64_sim(0xFFFF_0000_FFFF_0000);
+    let mut simulated_fpga = SimulatedFpgaMmioBank::new(ternary_centroids[0]);
+    let fpga_driver = unsafe { FpgaAxiDriver::from_raw(simulated_fpga.as_mut_ptr()) };
+    fpga_driver.set_input_vector(&ternary_centroids[0]);
+    fpga_driver.trigger_execution();
+    simulated_fpga.step_cycle();
+    let (fpga_score, fpga_intent) = fpga_driver.read_results();
+    println!("[FPGA] Synthesizable Combinational 64-Bit Wallace Tree Popcount: {} bits", fpga_popcnt);
+    println!("[FPGA] AXI4-Lite MMIO Core Executed (1 Clock Cycle): Score = {} | Intent ID = {}", fpga_score, fpga_intent);
+
+    // 18. Comprehensive Performance Benchmarks
     println!("\n============================================================");
     println!("  OPURE OS COMPREHENSIVE BENCHMARKS (1,000,000 PASSES)      ");
     println!("============================================================");
@@ -813,6 +875,51 @@ fn main() {
     let ns_cluster = t_cluster_elapsed.as_nanos() as f64 / bench_iters as f64;
     let mops_cluster = (bench_iters as f64 / t_cluster_elapsed.as_secs_f64()) / 1_000_000.0;
 
+    // Benchmark 18: In-Browser WASM Linear Memory & NCM Route (Frontier 1)
+    let t_wasm_start = Instant::now();
+    for _ in 0..bench_iters {
+        let route_res = opure_wasm_route_ternary(
+            black_box(0x0000FFFF),
+            black_box(0x0000FFFF),
+            black_box(0xFFFF0000),
+            black_box(0xFFFF0000),
+        );
+        black_box(route_res);
+    }
+    let t_wasm_elapsed = t_wasm_start.elapsed();
+    let ns_wasm = t_wasm_elapsed.as_nanos() as f64 / bench_iters as f64;
+    let mops_wasm = (bench_iters as f64 / t_wasm_elapsed.as_secs_f64()) / 1_000_000.0;
+
+    // Benchmark 19: Type-1 Hypervisor VM-Exit Intercept & Autopatch (Frontier 2)
+    let mut bench_vm = GuestVmContext::new(99, CAP_ALL);
+    let t_hyp_start = Instant::now();
+    for _ in 0..bench_iters {
+        bench_vm.guest_rip = 0x00007FFA_DEAD_BEEF;
+        let action = hypervisor_core.handle_vm_exit(
+            black_box(&mut bench_vm),
+            black_box(VmExitReason::ExceptionOrNmi),
+            black_box(0),
+            black_box(0),
+        );
+        black_box(action);
+    }
+    let t_hyp_elapsed = t_hyp_start.elapsed();
+    let ns_hyp = t_hyp_elapsed.as_nanos() as f64 / bench_iters as f64;
+    let mops_hyp = (bench_iters as f64 / t_hyp_elapsed.as_secs_f64()) / 1_000_000.0;
+
+    // Benchmark 20: FPGA AXI4-Lite MMIO & Combinational ALU Latency (Frontier 3)
+    let t_fpga_start = Instant::now();
+    for _ in 0..bench_iters {
+        fpga_driver.set_input_vector(black_box(&ternary_centroids[0]));
+        fpga_driver.trigger_execution();
+        simulated_fpga.step_cycle();
+        let (score, intent) = fpga_driver.read_results();
+        black_box((score, intent));
+    }
+    let t_fpga_elapsed = t_fpga_start.elapsed();
+    let ns_fpga = t_fpga_elapsed.as_nanos() as f64 / bench_iters as f64;
+    let mops_fpga = (bench_iters as f64 / t_fpga_elapsed.as_secs_f64()) / 1_000_000.0;
+
     println!("1. Multiplier-Less Ternary NCM Latency:   {:.2} ns / pass ({:.2}x over i8)", ns_ternary, ns_i8 / ns_ternary);
     println!("2. Mandelbrot Stability Gate Latency:     {:.2} ns / check", ns_mandel);
     println!("3. Zero-Copy PE32+ Header + IAT Parse:    {:.2} ns / binary ({:.2}M parses/sec)", ns_pe, mops_pe);
@@ -829,7 +936,10 @@ fn main() {
     println!("14. Swarm Tick & Mailbox Dispatch:        {:.2} ns / sweep ({:.2}M sweeps/sec)", ns_swarm, mops_swarm);
     println!("15. Silicon Tensor Core Warp GEMV:        {:.2} ns / pass ({:.2}M passes/sec)", ns_cuda, mops_cuda);
     println!("16. RoCEv2 RDMA Sync + Consensus:         {:.2} ns / cycle ({:.2}M cycles/sec)", ns_cluster, mops_cluster);
-    println!("17. Total Memory Allocation:              0 bytes (Pure unmanaged stack/slab)");
+    println!("17. Browser WASM Linear Memory + NCM:     {:.2} ns / pass ({:.2}M passes/sec)", ns_wasm, mops_wasm);
+    println!("18. Hypervisor VM-Exit & Autopatch:       {:.2} ns / exit ({:.2}M exits/sec)", ns_hyp, mops_hyp);
+    println!("19. FPGA AXI4-Lite MMIO & Combinational:  {:.2} ns / cycle ({:.2}M cycles/sec)", ns_fpga, mops_fpga);
+    println!("20. Total Memory Allocation:              0 bytes (Pure unmanaged stack/slab)");
     println!("============================================================");
 
     // Suppress unused warning on cacheline variables

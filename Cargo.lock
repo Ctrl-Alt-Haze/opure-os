@@ -39,13 +39,16 @@ dependencies = [
  "opure-crystallizer",
  "opure-cuda",
  "opure-endpoint",
+ "opure-fpga",
  "opure-geometric",
  "opure-hal",
+ "opure-hypervisor",
  "opure-lifter",
  "opure-oztae",
  "opure-rsi",
  "opure-shell",
  "opure-swarm",
+ "opure-wasm",
 ]
 
 [[package]]
@@ -76,6 +79,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "opure-fpga"
+version = "0.1.0"
+dependencies = [
+ "opure-bus",
+ "opure-hal",
+]
+
+[[package]]
 name = "opure-geometric"
 version = "0.1.0"
 dependencies = [
@@ -86,6 +97,17 @@ dependencies = [
 [[package]]
 name = "opure-hal"
 version = "0.1.0"
+
+[[package]]
+name = "opure-hypervisor"
+version = "0.1.0"
+dependencies = [
+ "opure-boot",
+ "opure-bus",
+ "opure-hal",
+ "opure-lifter",
+ "opure-oztae",
+]
 
 [[package]]
 name = "opure-lifter"
@@ -139,4 +161,15 @@ dependencies = [
  "opure-oztae",
  "opure-rsi",
  "opure-shell",
+]
+
+[[package]]
+name = "opure-wasm"
+version = "0.1.0"
+dependencies = [
+ "opure-bus",
+ "opure-geometric",
+ "opure-hal",
+ "opure-oztae",
+ "opure-swarm",
 ]

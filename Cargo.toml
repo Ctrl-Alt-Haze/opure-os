@@ -14,6 +14,9 @@ members = [
     "crates/opure-swarm",
     "crates/opure-cuda",
     "crates/opure-cluster",
+    "crates/opure-wasm",
+    "crates/opure-hypervisor",
+    "crates/opure-fpga",
     "bin/opure-core",
 ]
 

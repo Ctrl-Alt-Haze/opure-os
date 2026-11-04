@@ -1,0 +1,20 @@
+[package]
+name = "opure-wasm"
+version = "0.1.0"
+edition = "2021"
+authors = ["OPURE Core Architecture Team"]
+license = "Apache-2.0 OR MIT"
+description = "Native WebAssembly & Browser Sandbox Runtime for OPURE OS Cognitive Core"
+
+[dependencies]
+opure-hal = { path = "../opure-hal" }
+opure-bus = { path = "../opure-bus" }
+opure-geometric = { path = "../opure-geometric" }
+opure-oztae = { path = "../opure-oztae" }
+opure-swarm = { path = "../opure-swarm" }
+
+[lib]
+crate-type = ["rlib"]
+
+[features]
+default = []
