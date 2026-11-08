@@ -15,12 +15,12 @@
 pub mod bridge;
 
 use bridge::SyncUnsafeCell;
-use opure_bus::EventRingBuffer;
+use opure_bus::{EventKind, EventRingBuffer, OpureEvent};
 use opure_geometric::SystemIntent;
 use opure_hal::simd::ternary_dot_ternary;
 use opure_hal::{Aligned64, TernaryCentroid64};
 use opure_oztae::{oztae_verify_access_prequantized, OztaeIdentity, CAP_ALL};
-use opure_swarm::{SwarmRole, SwarmSupervisor};
+use opure_swarm::{EnterpriseSwarmHarness, SwarmDomain, SwarmRole, SwarmSupervisor};
 
 /// Static unmanaged state container for WASM runtime.
 #[repr(C, align(64))]
@@ -30,6 +30,7 @@ pub struct WasmEngineState {
     pub root_agent_identity: OztaeIdentity,
     pub event_bus: EventRingBuffer<16>,
     pub supervisor: SwarmSupervisor<8>,
+    pub enterprise_harness: EnterpriseSwarmHarness<64>,
     pub initialized: bool,
 }
 
@@ -44,42 +45,66 @@ static WASM_ENGINE_STATE: Aligned64<SyncUnsafeCell<WasmEngineState>> = Aligned64
     root_agent_identity: OztaeIdentity::new(1, CAP_ALL, TernaryCentroid64::new(0, 0), 0, 1000),
     event_bus: EventRingBuffer::new(),
     supervisor: SwarmSupervisor::new(),
+    enterprise_harness: EnterpriseSwarmHarness::new(),
     initialized: false,
 }));
+
+use core::sync::atomic::{AtomicBool, Ordering};
+
+static INIT_STARTED: AtomicBool = AtomicBool::new(false);
+static INIT_COMPLETED: AtomicBool = AtomicBool::new(false);
 
 /// Initializes the WASM engine state and pre-populates default centroids and a root agent.
 #[no_mangle]
 pub extern "C" fn opure_wasm_init() -> u32 {
-    unsafe {
-        let state = &mut *WASM_ENGINE_STATE.0.get();
-        if !state.initialized {
-            // Populate nominal centroid
-            state.centroids[0] = TernaryCentroid64::new(0x0000FFFF0000FFFF, 0xFFFF0000FFFF0000);
-            // Populate urgent task centroid
-            state.centroids[1] = TernaryCentroid64::new(0xFF00FF00FF00FF00, 0x00FF00FF00FF00FF);
-            // Populate thermal centroid
-            state.centroids[2] = TernaryCentroid64::new(0x0F0F0F0F0F0F0F0F, 0xF0F0F0F0F0F0F0F0);
-            // Populate divergence centroid
-            state.centroids[3] = TernaryCentroid64::new(0xAAAAAAAAAAAAAAAA, 0x5555555555555555);
+    if INIT_COMPLETED.load(Ordering::Acquire) {
+        return 1;
+    }
 
-            // Spawn initial Web Worker Swarm Agent
-            state.root_agent_identity = OztaeIdentity::new(
-                1,
-                CAP_ALL,
-                state.centroids[0],
-                0,
-                1000,
-            );
-            let _ = state.supervisor.spawn_agent(
-                SwarmRole::TelemetryMonitor,
-                CAP_ALL,
-                state.centroids[0],
-                state.centroids[0],
-                0,
-                1000,
-            );
+    if INIT_STARTED
+        .compare_exchange(false, true, Ordering::AcqRel, Ordering::Relaxed)
+        .is_ok()
+    {
+        unsafe {
+            let state = &mut *WASM_ENGINE_STATE.0.get();
+            if !state.initialized {
+                // Populate nominal centroid
+                state.centroids[0] = TernaryCentroid64::new(0x0000FFFF0000FFFF, 0xFFFF0000FFFF0000);
+                // Populate urgent task centroid
+                state.centroids[1] = TernaryCentroid64::new(0xFF00FF00FF00FF00, 0x00FF00FF00FF00FF);
+                // Populate thermal centroid
+                state.centroids[2] = TernaryCentroid64::new(0x0F0F0F0F0F0F0F0F, 0xF0F0F0F0F0F0F0F0);
+                // Populate divergence centroid
+                state.centroids[3] = TernaryCentroid64::new(0xAAAAAAAAAAAAAAAA, 0x5555555555555555);
 
-            state.initialized = true;
+                // Spawn initial Web Worker Swarm Agent
+                state.root_agent_identity = OztaeIdentity::new(
+                    1,
+                    CAP_ALL,
+                    state.centroids[0],
+                    0,
+                    1000,
+                );
+                let _ = state.supervisor.spawn_agent(
+                    SwarmRole::TelemetryMonitor,
+                    CAP_ALL,
+                    state.centroids[0],
+                    state.centroids[0],
+                    0,
+                    1000,
+                );
+
+                // Initialize all 51 Autonomous Enterprise Matrix Agents
+                let _ = state.enterprise_harness.init_all_51_agents();
+
+                state.initialized = true;
+            }
+        }
+        INIT_COMPLETED.store(true, Ordering::Release);
+        1
+    } else {
+        while !INIT_COMPLETED.load(Ordering::Acquire) {
+            core::hint::spin_loop();
         }
         1
     }
@@ -166,6 +191,132 @@ pub extern "C" fn opure_wasm_swarm_tick(_step_delta: u32) -> u32 {
     }
 }
 
+/// Returns the total number of specialized enterprise agents (51).
+#[no_mangle]
+pub extern "C" fn opure_wasm_get_enterprise_agent_count() -> u32 {
+    51
+}
+
+/// Serializes all 51 enterprise agents into the static unmanaged transfer buffer.
+///
+/// Each agent record occupies 48 bytes (12 u32 words):
+/// `[id, domain_id, role_id, ticks, events, fitness, is_quarantined, pos_lo, pos_hi, neg_lo, neg_hi, reserved]`
+/// Total footprint = 51 * 48 = 2,448 bytes (0 heap bytes).
+#[no_mangle]
+pub extern "C" fn opure_wasm_export_all_agents(out_byte_offset: u32) -> u32 {
+    let base = out_byte_offset as usize;
+    if base + 51 * 48 > 65536 {
+        return 0;
+    }
+
+    unsafe {
+        let state = &mut *WASM_ENGINE_STATE.0.get();
+        let mut count = 0;
+
+        for i in 0..51 {
+            if let Some(agent) = state.enterprise_harness.get_agent(i) {
+                let (domain_id, role_id) = match agent.role {
+                    SwarmRole::Enterprise(r) => (r.domain() as u32, r.id()),
+                    _ => (0, 0),
+                };
+
+                let fitness = ternary_dot_ternary(&agent.local_centroid, &agent.target_centroid);
+                let quarantined = if agent.identity.is_quarantined() { 1u32 } else { 0u32 };
+
+                let record: [u32; 12] = [
+                    agent.id,
+                    domain_id,
+                    role_id,
+                    agent.execution_ticks as u32,
+                    agent.events_processed as u32,
+                    fitness as u32,
+                    quarantined,
+                    (agent.local_centroid.pos_mask & 0xFFFF_FFFF) as u32,
+                    ((agent.local_centroid.pos_mask >> 32) & 0xFFFF_FFFF) as u32,
+                    (agent.local_centroid.neg_mask & 0xFFFF_FFFF) as u32,
+                    ((agent.local_centroid.neg_mask >> 32) & 0xFFFF_FFFF) as u32,
+                    0u32,
+                ];
+
+                let record_bytes = core::slice::from_raw_parts(
+                    record.as_ptr() as *const u8,
+                    48,
+                );
+
+                bridge::write_bytes_to_buffer(base + i * 48, record_bytes);
+                count += 1;
+            }
+        }
+        count
+    }
+}
+
+/// Executes synchronized cognitive ticks across the 51-agent enterprise swarm.
+#[no_mangle]
+pub extern "C" fn opure_wasm_tick_enterprise_swarm(delta_ticks: u32) -> u32 {
+    unsafe {
+        let state = &mut *WASM_ENGINE_STATE.0.get();
+        let ticks = if delta_ticks == 0 { 1 } else { delta_ticks };
+        for _ in 0..ticks {
+            state.enterprise_harness.tick_swarm(&mut state.event_bus);
+        }
+        state.enterprise_harness.agent_count() as u32
+    }
+}
+
+/// Dispatches a cross-domain mission between functional enterprise teams.
+#[no_mangle]
+pub extern "C" fn opure_wasm_dispatch_domain_mission(
+    source_domain: u32,
+    target_domain: u32,
+    event_kind_id: u32,
+) -> u32 {
+    unsafe {
+        let state = &mut *WASM_ENGINE_STATE.0.get();
+        let src = match source_domain {
+            0 => SwarmDomain::ExecutiveCoordination,
+            1 => SwarmDomain::Research,
+            2 => SwarmDomain::ModelDevelopment,
+            3 => SwarmDomain::Infrastructure,
+            4 => SwarmDomain::Product,
+            5 => SwarmDomain::ChatGptProduct,
+            6 => SwarmDomain::SafetyTrust,
+            7 => SwarmDomain::EnterpriseDeployment,
+            8 => SwarmDomain::GoToMarket,
+            9 => SwarmDomain::BusinessOperations,
+            10 => SwarmDomain::Governance,
+            _ => SwarmDomain::ExecutiveCoordination,
+        };
+        let tgt = match target_domain {
+            0 => SwarmDomain::ExecutiveCoordination,
+            1 => SwarmDomain::Research,
+            2 => SwarmDomain::ModelDevelopment,
+            3 => SwarmDomain::Infrastructure,
+            4 => SwarmDomain::Product,
+            5 => SwarmDomain::ChatGptProduct,
+            6 => SwarmDomain::SafetyTrust,
+            7 => SwarmDomain::EnterpriseDeployment,
+            8 => SwarmDomain::GoToMarket,
+            9 => SwarmDomain::BusinessOperations,
+            10 => SwarmDomain::Governance,
+            _ => SwarmDomain::SafetyTrust,
+        };
+        let kind = match event_kind_id {
+            1 => EventKind::KernelHook,
+            2 => EventKind::ProcessFault,
+            3 => EventKind::MemoryPressure,
+            4 => EventKind::IoBottleneck,
+            5 => EventKind::ThermalSpike,
+            6 => EventKind::UserInputIntent,
+            _ => EventKind::AgentHeartbeat,
+        };
+        let mut evt = OpureEvent::empty();
+        evt.kind = kind;
+        evt.timestamp_ns = state.enterprise_harness.mission_counter;
+        state.enterprise_harness.dispatch_cross_domain_mission(src, tgt, evt) as u32
+    }
+}
+
 #[cfg(all(target_arch = "wasm32", not(test)))]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
@@ -222,5 +373,23 @@ mod tests {
         assert_eq!(opure_wasm_init(), 1);
         let active = opure_wasm_swarm_tick(1);
         assert!(active >= 1);
+    }
+
+    #[test]
+    fn test_wasm_enterprise_swarm_export_and_missions() {
+        assert_eq!(opure_wasm_init(), 1);
+        assert_eq!(opure_wasm_get_enterprise_agent_count(), 51);
+
+        // Export all 51 agents to buffer
+        let exported = opure_wasm_export_all_agents(0);
+        assert_eq!(exported, 51);
+
+        // Tick swarm
+        let ticked_count = opure_wasm_tick_enterprise_swarm(2);
+        assert_eq!(ticked_count, 51);
+
+        // Dispatch cross-domain mission from Exec (0) to Safety (6)
+        let delivered = opure_wasm_dispatch_domain_mission(0, 6, 1);
+        assert_eq!(delivered, 5); // 5 agents in Safety & Trust
     }
 }

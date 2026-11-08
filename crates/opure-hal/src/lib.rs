@@ -143,7 +143,7 @@ impl<T, const CAPACITY: usize> StaticSlab<T, CAPACITY> {
 
     #[inline(always)]
     pub fn get(&self, idx: usize) -> Option<&T> {
-        if idx < self.len {
+        if idx < self.len && idx < CAPACITY {
             unsafe { Some(self.storage[idx].assume_init_ref()) }
         } else {
             None
@@ -152,7 +152,7 @@ impl<T, const CAPACITY: usize> StaticSlab<T, CAPACITY> {
 
     #[inline(always)]
     pub fn get_mut(&mut self, idx: usize) -> Option<&mut T> {
-        if idx < self.len {
+        if idx < self.len && idx < CAPACITY {
             unsafe { Some(self.storage[idx].assume_init_mut()) }
         } else {
             None

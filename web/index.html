@@ -251,6 +251,234 @@
       display: flex;
       justify-content: space-between;
     }
+
+    .view-switcher {
+      display: flex;
+      gap: 8px;
+    }
+
+    button.view-btn {
+      background: #121620;
+      border: 1px solid #232B3E;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 6px 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      letter-spacing: 1px;
+    }
+
+    button.view-btn:hover {
+      border-color: var(--cyan);
+      color: #FFF;
+    }
+
+    button.view-btn.active {
+      background: rgba(0, 229, 255, 0.15);
+      border-color: var(--cyan);
+      color: var(--cyan);
+      font-weight: bold;
+    }
+
+    /* Enterprise Swarm Matrix Styles */
+    #swarm-view-panel {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      padding: 16px;
+      background: #06080D;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .mission-bar {
+      background: #0D1017;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 10px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mission-bar .mission-label {
+      font-size: 0.7rem;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-right: 6px;
+      font-weight: bold;
+    }
+
+    .mission-btn {
+      background: #131722;
+      border: 1px solid #242E42;
+      color: #DCE3F2;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 6px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .mission-btn:hover {
+      background: rgba(0, 229, 255, 0.15);
+      border-color: var(--cyan);
+      color: #FFF;
+      transform: translateY(-1px);
+    }
+
+    .swarm-matrix-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 12px;
+    }
+
+    .domain-card {
+      background: #0A0D14;
+      border: 1px solid #1A2130;
+      border-radius: 4px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .domain-card:hover {
+      border-color: #2D3952;
+    }
+
+    .domain-card.active-pulse {
+      border-color: var(--cyan);
+      box-shadow: 0 0 16px rgba(0, 229, 255, 0.25);
+    }
+
+    .domain-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #141A26;
+      padding-bottom: 6px;
+    }
+
+    .domain-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .domain-badge {
+      font-size: 0.65rem;
+      padding: 1px 6px;
+      background: #141A26;
+      border-radius: 2px;
+      color: var(--text-muted);
+    }
+
+    .agent-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .agent-item {
+      background: #0E121B;
+      border: 1px solid #1A2233;
+      padding: 6px 8px;
+      border-radius: 3px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .agent-item:hover {
+      background: #161D2B;
+      border-color: var(--cyan);
+    }
+
+    .agent-item.selected {
+      border-color: var(--cyan);
+      background: rgba(0, 229, 255, 0.12);
+    }
+
+    .agent-name-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 6px var(--emerald);
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.4; }
+      50% { opacity: 1; }
+      100% { opacity: 0.4; }
+    }
+
+    .agent-title-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #E2E8F0;
+    }
+
+    .agent-stats {
+      display: flex;
+      gap: 6px;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .agent-inspector-modal {
+      background: #0A0D15;
+      border: 1px solid var(--cyan);
+      border-radius: 4px;
+      padding: 12px 16px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+    }
+
+    .agent-inspector-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--cyan);
+      font-weight: bold;
+    }
+
+    .agent-inspector-body {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 8px;
+      font-size: 0.72rem;
+    }
   </style>
 </head>
 <body>
@@ -261,10 +489,14 @@
       <span class="badge">WASM 1.58-Bit Core</span>
       <span class="badge">Zero-GC Substrate</span>
     </div>
+    <div class="view-switcher">
+      <button id="view-kinetic-btn" class="view-btn active">KINETIC SHELL</button>
+      <button id="view-swarm-btn" class="view-btn">ENTERPRISE SWARM (51 AGENTS)</button>
+    </div>
     <div class="telemetry-bar">
       <div class="telemetry-item"><span class="label">HEAP: </span><span class="val" id="telemetry-heap">0 BYTES</span></div>
       <div class="telemetry-item"><span class="label">NCM LATENCY: </span><span class="val" id="telemetry-latency">11.10 ns</span></div>
-      <div class="telemetry-item"><span class="label">SWARM AGENTS: </span><span class="val" id="telemetry-agents">4 ACTIVE</span></div>
+      <div class="telemetry-item"><span class="label">SWARM AGENTS: </span><span class="val" id="telemetry-agents">51 ACTIVE</span></div>
       <div class="telemetry-item"><span class="label">FPS: </span><span class="val" id="telemetry-fps">60.0</span></div>
     </div>
   </header>
@@ -272,6 +504,52 @@
   <main>
     <div class="stage-container">
       <canvas id="compositor-canvas"></canvas>
+
+      <!-- Enterprise Swarm Matrix Dashboard View -->
+      <div id="swarm-view-panel" style="display: none;">
+        <div class="mission-bar">
+          <span class="mission-label">⚡ CROSS-DOMAIN MISSIONS:</span>
+          <button class="mission-btn" id="btn-mission-train">
+            <span>🚀</span> Frontier Training Run
+          </button>
+          <button class="mission-btn" id="btn-mission-redteam">
+            <span>🛡️</span> Red-Team Zero-Trust Strike
+          </button>
+          <button class="mission-btn" id="btn-mission-release">
+            <span>📦</span> ChatGPT Product Release
+          </button>
+          <button class="mission-btn" id="btn-mission-client">
+            <span>💼</span> Enterprise Client Pipeline
+          </button>
+          <button class="mission-btn" id="btn-mission-rsi">
+            <span>🧬</span> RSI Plasticity Adaptation
+          </button>
+        </div>
+
+        <!-- Agent Inspection Drawer -->
+        <div class="agent-inspector-modal" id="agent-inspector">
+          <div class="agent-inspector-header">
+            <span id="inspect-title">Agent Inspection Details</span>
+            <button id="btn-close-inspect" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem;">×</button>
+          </div>
+          <div class="agent-inspector-body">
+            <div><span style="color: var(--text-muted)">Agent ID:</span> <span id="inspect-id" style="color: var(--cyan)">#1</span></div>
+            <div><span style="color: var(--text-muted)">Domain:</span> <span id="inspect-domain" style="color: var(--emerald)">Executive</span></div>
+            <div><span style="color: var(--text-muted)">Execution Ticks:</span> <span id="inspect-ticks">0</span></div>
+            <div><span style="color: var(--text-muted)">Events Processed:</span> <span id="inspect-events">0</span></div>
+            <div><span style="color: var(--text-muted)">POPCNT Fitness:</span> <span id="inspect-fitness" style="color: var(--cyan)">64 / 64</span></div>
+            <div><span style="color: var(--text-muted)">Zero-Trust Firewall:</span> <span id="inspect-firewall" style="color: var(--emerald)">PASS (3.17ns)</span></div>
+            <div><span style="color: var(--text-muted)">Morton Spatial Fence:</span> <span id="inspect-morton">0 - 999</span></div>
+            <div><span style="color: var(--text-muted)">Centroid Dual Bitmask:</span> <span id="inspect-masks" style="font-size: 0.65rem; color: #BD00FF">0x5555... / 0xAAAA...</span></div>
+          </div>
+        </div>
+
+        <!-- Grid of 11 Functional Enterprise Domains -->
+        <div class="swarm-matrix-grid" id="swarm-matrix-grid">
+          <!-- Dynamically populated from WASM state -->
+        </div>
+      </div>
+
       <div class="hud-overlay">
         <div class="hud-scottish-box">
           <div class="hud-tag" id="hud-status-tag">SYSTEM TELEMETRY // NOMINAL STEADY-STATE</div>

@@ -16,6 +16,7 @@ pub enum SwarmRole {
     KineticCompositor,
     LifterSplicer,
     SecuritySentinel,
+    Enterprise(crate::enterprise::EnterpriseRole),
     Custom(u16),
 }
 
@@ -124,6 +125,7 @@ impl SwarmAgent {
             SwarmRole::KineticCompositor => SystemIntent::UserInputUrgentTask,
             SwarmRole::LifterSplicer => SystemIntent::CoredumpAutoPatch,
             SwarmRole::SecuritySentinel => SystemIntent::EnclaveQuarantineLock,
+            SwarmRole::Enterprise(_) => SystemIntent::NominalSteadyState,
             SwarmRole::Custom(_) => SystemIntent::NominalSteadyState,
         }
     }

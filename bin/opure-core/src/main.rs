@@ -40,7 +40,7 @@ use opure_oztae::{
 use opure_rsi::{PlasticityMutator, TernaryPlasticityEngine};
 use opure_boot::{BareMetalBoot, LongModePaging, Multiboot2Parser, PageTable};
 use opure_endpoint::OpureEndpointServer;
-use opure_swarm::{SwarmRole, SwarmSupervisor};
+use opure_swarm::{EnterpriseSwarmHarness, SwarmDomain, SwarmRole, SwarmSupervisor};
 use opure_cuda::{TernarySiliconCoprocessor, OPURE_TERNARY_TENSOR_PTX};
 use opure_cluster::{ClusterMeshNode, GeometricConsensus, RoCeProtocol};
 use opure_wasm::{opure_wasm_init, opure_wasm_route_ternary, opure_wasm_firewall_verify, opure_wasm_swarm_tick, bridge::write_centroid_to_buffer};
@@ -982,6 +982,24 @@ fn main() {
     let ns_audio = t_audio_elapsed.as_nanos() as f64 / audio_iters as f64;
     let mops_audio = (audio_iters as f64 / t_audio_elapsed.as_secs_f64()) / 1_000_000.0;
 
+    // Benchmark 22: Enterprise Swarm Matrix 51-Agent Cross-Domain Mission Dispatch (opure-swarm)
+    let mut enterprise_harness = EnterpriseSwarmHarness::<64>::new();
+    let _ = enterprise_harness.init_all_51_agents();
+    let t_ent_start = Instant::now();
+    let mut mission_event = OpureEvent::empty();
+    mission_event.kind = opure_bus::EventKind::KernelHook;
+    for _ in 0..bench_iters {
+        let delivered = enterprise_harness.dispatch_cross_domain_mission(
+            black_box(SwarmDomain::ExecutiveCoordination),
+            black_box(SwarmDomain::SafetyTrust),
+            black_box(mission_event),
+        );
+        black_box(delivered);
+    }
+    let t_ent_elapsed = t_ent_start.elapsed();
+    let ns_ent = t_ent_elapsed.as_nanos() as f64 / bench_iters as f64;
+    let mops_ent = (bench_iters as f64 / t_ent_elapsed.as_secs_f64()) / 1_000_000.0;
+
     println!("1. Multiplier-Less Ternary NCM Latency:   {:.2} ns / pass ({:.2}x over i8)", ns_ternary, ns_i8 / ns_ternary);
     println!("2. Mandelbrot Stability Gate Latency:     {:.2} ns / check", ns_mandel);
     println!("3. Zero-Copy PE32+ Header + IAT Parse:    {:.2} ns / binary ({:.2}M parses/sec)", ns_pe, mops_pe);
@@ -1003,7 +1021,8 @@ fn main() {
     println!("19. FPGA AXI4-Lite MMIO & Combinational:  {:.2} ns / cycle ({:.2}M cycles/sec)", ns_fpga, mops_fpga);
     println!("20. Morton Z-Curve Content Block Seek:    {:.2} ns / seek ({:.2}M seeks/sec)", ns_fs, mops_fs);
     println!("21. Scottish Formant Speech Synthesizer:  {:.2} ns / phrase ({:.2}M phrases/sec)", ns_audio, mops_audio);
-    println!("22. Total Memory Allocation:              0 bytes (Pure unmanaged stack/slab)");
+    println!("22. Enterprise Swarm Matrix (51 Agents):  {:.2} ns / mission ({:.2}M missions/sec)", ns_ent, mops_ent);
+    println!("23. Total Memory Allocation:              0 bytes (Pure unmanaged stack/slab)");
     println!("============================================================");
 
     // Suppress unused warning on cacheline variables

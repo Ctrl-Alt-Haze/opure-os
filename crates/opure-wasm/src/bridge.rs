@@ -42,6 +42,18 @@ pub extern "C" fn opure_wasm_get_static_buffer_ptr() -> *mut u8 {
     }
 }
 
+/// Writes raw bytes directly into the static WASM transfer buffer.
+pub fn write_bytes_to_buffer(offset: usize, bytes: &[u8]) -> bool {
+    if offset + bytes.len() > 65536 {
+        return false;
+    }
+    unsafe {
+        let bridge = &mut *WASM_STATIC_BRIDGE.0.get();
+        bridge.raw_buffer[offset..offset + bytes.len()].copy_from_slice(bytes);
+        true
+    }
+}
+
 /// Reads a 64-bit pair (`pos_mask`, `neg_mask`) from the transfer buffer at `byte_offset`.
 pub fn read_centroid_from_buffer(byte_offset: usize) -> Option<TernaryCentroid64> {
     if byte_offset + 16 > 65536 {

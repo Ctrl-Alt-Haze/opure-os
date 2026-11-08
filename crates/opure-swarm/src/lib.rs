@@ -8,9 +8,13 @@
 
 pub mod agent;
 pub mod archetypes;
+pub mod enterprise;
 pub mod ffi;
 pub mod supervisor;
 
 pub use agent::{AgentStepOutcome, SwarmAgent, SwarmRole};
 pub use archetypes::SwarmArchetypeWorkers;
+pub use enterprise::{
+    ALL_ENTERPRISE_ROLES, EnterpriseRole, EnterpriseSwarmHarness, SwarmDomain,
+};
 pub use supervisor::{SwarmSupervisor, SwarmTickSummary};
